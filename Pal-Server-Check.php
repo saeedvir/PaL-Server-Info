@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Php And Laravel (PaL) Server Info
@@ -334,7 +333,7 @@ class ServerCheck
 
       return $version;
     } catch (Exception $e) {
-      return 'Error - Check Mysql Config on line 23';
+      return 'Error - Check Mysql Config on line 22';
     }
   }
 
@@ -1064,7 +1063,7 @@ if (isset($_GET['Download_Update'])) {
                 <p class="text-muted">This tool performs a benchmark test on MySQL database and PHP server.</p>
                 <p class="text-muted">
                   <span class="material-symbols-outlined text-warning pulse-animation">privacy_tip</span>
-                  Don't forget to enter the mysql username and password in '<?php echo basename($_SERVER["SCRIPT_FILENAME"]); ?>' on line 23
+                  Don't forget to enter the mysql username and password in '<?php echo basename($_SERVER["SCRIPT_FILENAME"]); ?>' on line 22
                 </p>
                 <a href="?Benchmark&laravel_version=<?php echo $laravel_version_select; ?>" class="btn btn-outline-primary mt-2 mx-2">Php Benchmark</a>
                 <a href="?Mysql-Benchmark&laravel_version=<?php echo $laravel_version_select; ?>" class="btn btn-outline-primary mt-2 mx-2">Mysql Benchmark</a>
@@ -1182,7 +1181,7 @@ if (isset($_GET['Download_Update'])) {
             unset($benchmark_results);
           else :
           ?>
-            <div class="alert alert-warning">Error in Mysql Connection - Check Mysql Config on line 23</div>
+            <div class="alert alert-warning">Error in Mysql Connection - Check Mysql Config on line 22</div>
             <!-- End Mysql Benchmark Box -->
         <?php
           endif;
