@@ -15,7 +15,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-1))
+![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-1.png))
 
 
 Php And Laravel (PaL) Server Info
@@ -60,8 +60,8 @@ Or
 
 ### Php And Mysql Benchmark Config
 
-![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-2))
-![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-3))
+![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-2.png))
+![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-3.png))
 
 1. Don't forget to enter the mysql username and password in 'Pal-Server-Info.php' on line 22
    ```php
