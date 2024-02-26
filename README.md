@@ -4,10 +4,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/github_username/repo_name">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
-
+  
 <h3 align="center">PaL Server Info</h3>
 
   <p align="center">
@@ -17,6 +14,9 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
+
+![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-1))
+
 
 Php And Laravel (PaL) Server Info
 Also this tool performs a benchmark test on MySQL database and PHP server.
@@ -58,7 +58,10 @@ Or
   http://127.0.0.1/Pal-Server-Info.php
   ```
 
-### Mysql Benchmark Config
+### Php And Mysql Benchmark Config
+
+![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-2))
+![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-3))
 
 1. Don't forget to enter the mysql username and password in 'Pal-Server-Info.php' on line 22
    ```php
@@ -72,6 +75,8 @@ Or
    ```
 2. Refresh Your Browser
 
+## How To Update
+Just click on "Check for Update" at the bottom of the page (footer)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
