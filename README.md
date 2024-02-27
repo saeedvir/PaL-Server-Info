@@ -8,7 +8,7 @@
 <h3 align="center">PaL Server Info</h3>
 
   <p align="center">
-    Php And Laravel (PaL) Server Info
+    Php And Laravel (PaL) Server Info And Laravel Requirements Checker
   </p>
 </div>
 
