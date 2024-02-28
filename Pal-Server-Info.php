@@ -17,7 +17,7 @@ if (version_compare(PHP_VERSION, '5.6') < 0) {
   exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.0'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.1'; //Current Version , Don't change this !!!
 
 $MYSQL_CONFIG = [
   'host' => 'localhost',
@@ -45,6 +45,11 @@ $serverinfo_list = (new ServerRequirements)->ServerInfoList();
 $optional_list = (new ServerRequirements)->OptionalList();
 
 $info_cards = (new ServerRequirements)->ServerInfoCards();
+
+if (isset($_GET['Recommendations'])) {
+  $recommendations = (new Recommendations())->getRecommendations();
+}
+
 
 //Classes and Functions
 class ServerRequirements
@@ -390,7 +395,55 @@ class Helper
     return in_array($value, ['true', '1', 'yes', 'on']);
   }
 
-  private function httpGet($url)
+  public function booleanToString($value)
+  {
+    $value = strtolower($value);
+    return in_array($value, ['true', '1', 'yes', 'on']) !== false ? 'On' : 'Off';
+  }
+
+  public function getNumbersFromString($str)
+  {
+    return filter_var($str, FILTER_SANITIZE_NUMBER_INT);
+  }
+
+  /**
+   * Converts a human readable file size value to a number of bytes that it
+   * represents. Supports the following modifiers: K, M, G and T.
+   * Invalid input is returned unchanged.
+   *
+   * Example:
+   * <code>
+   * $config->human2byte(10);          // 10
+   * $config->human2byte('10b');       // 10
+   * $config->human2byte('10k');       // 10240
+   * $config->human2byte('10K');       // 10240
+   * $config->human2byte('10kb');      // 10240
+   * $config->human2byte('10Kb');      // 10240
+   * // and even
+   * $config->human2byte('   10 KB '); // 10240
+   * </code>
+   *
+   * @param number|string $value
+   * @return number
+   */
+  public function stringNumber2Byte($str)
+  {
+    return preg_replace_callback('/^\s*(\d+)\s*(?:([kmgt]?)b?)?\s*$/i', function ($m) {
+      switch (strtolower($m[2])) {
+        case 't':
+          $m[1] *= 1024;
+        case 'g':
+          $m[1] *= 1024;
+        case 'm':
+          $m[1] *= 1024;
+        case 'k':
+          $m[1] *= 1024;
+      }
+      return $m[1];
+    }, $str);
+  }
+
+  public function httpGet($url)
   {
     if (function_exists('curl_init')) {
       $cURLConnection = curl_init();
@@ -811,6 +864,331 @@ class Benchmark
     }
   }
 }
+
+class Recommendations
+{
+
+  public function __construct()
+  {
+  }
+
+  private function getCheckList()
+  {
+    $configPath = 'pal-config.json';
+    $configUrl = 'https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/pal-config.json';
+
+    $response = file_exists($configPath)
+      ? file_get_contents($configPath)
+      : (new Helper)->httpGet($configUrl);
+
+    if(empty($response) || $response === '404: Not Found'){
+      die('pal-config.json Error');
+    }
+    return json_decode($response, true);
+  }
+
+  private function operatorValue($val1, $oprator, $val2 = null)
+  {
+    switch ($oprator) {
+      case '>':
+        return $val1 > $val2;
+        break;
+      case '>=':
+        return $val1 >= $val2;
+        break;
+      case '==':
+        return $val1 == $val2;
+        break;
+      case '===':
+        return $val1 === $val2;
+        break;
+      case '<':
+        return $val1 < $val2;
+        break;
+      case '<=':
+        return $val1 <= $val2;
+        break;
+      case '!=':
+        return $val1 != $val2;
+        break;
+      case '!==':
+        return $val1 !== $val2;
+        break;
+      case 'is_empty':
+        return empty($val1);
+        break;
+      case 'not_empty':
+        return !empty($val1);
+        break;
+      case 'is_true':
+        return $val1 === true;
+        break;
+      case 'is_false':
+        return $val1 === false;
+        break;
+      case 'is_null':
+        return $val1 === null;
+        break;
+      case 'function_exists':
+        return function_exists($val1);
+        break;
+      case 'class_exists':
+        return class_exists($val1);
+        break;
+      case 'function_not_exists':
+        return !function_exists($val1);
+        break;
+      case 'class_not_exists':
+        return !class_exists($val1);
+        break;
+      default:
+      return false;
+        break;
+    }
+  }
+
+
+  public function getRecommendations()
+  {
+    global $MYSQL_CONFIG;
+    $checklist  = $this->getCheckList();
+
+    $return_recommendations = [];
+    //ini
+    foreach ($checklist['ini_settings'] as $k => $val) {
+      $ini_data = ini_get($k);
+      if ($val['type'] === 'string_number') {
+        if (!$this->operatorValue((new Helper)->stringNumber2Byte($ini_data), $val['operation'], (new Helper)->stringNumber2Byte($val['value']))) {
+          $return_recommendations[] = [
+            'title' => $val['title'],
+            'your_value' => $ini_data,
+            'value' => $val['value'],
+            'dev_value' => $val['dev_value'],
+            'operation' => $val['operation'],
+            'type' => 'ini_settings',
+            'tag' => $val['tag'],
+            'how_to_fix' => $val['how_to_fix'],
+          ];
+        }
+      } elseif ($val['type'] === 'string') {
+
+        if ($k === 'error_reporting') {
+          $ini_data = (new ErrorReporting)->getErrorLevel();
+        }
+        if (!$this->operatorValue($ini_data, $val['operation'])) {
+          $return_recommendations[] = [
+            'title' => $val['title'],
+            'your_value' => $ini_data,
+            'value' => $val['value'],
+            'dev_value' => $val['dev_value'],
+            'operation' => $val['operation'],
+            'type' => 'ini_settings',
+            'tag' => $val['tag'],
+            'how_to_fix' => $val['how_to_fix'],
+          ];
+        }
+      } elseif ($val['type'] === 'boolean') {
+        if ((new Helper)->checkBoolean($ini_data) !== (new Helper)->checkBoolean($val['value'])) {
+          $return_recommendations[] = [
+            'title' => $val['title'],
+            'your_value' => (new Helper)->booleanToString($ini_data),
+            'value' => $val['value'],
+            'dev_value' => $val['dev_value'],
+            'operation' => $val['operation'],
+            'type' => 'ini_settings',
+            'tag' => $val['tag'],
+            'how_to_fix' => $val['how_to_fix'],
+          ];
+        }
+      } else {
+        continue;
+      }
+    }
+    //functions_classes
+    foreach ($checklist['functions_classes'] as $k => $val) {
+      $your_value = $this->operatorValue($k, $val['operation']);
+      if ($your_value !== $val['value']) {
+
+        $return_recommendations[] = [
+          'title' => $val['type'] . ' ' . $k,
+          'your_value' => ($your_value) ? 'callable' : 'no callable',
+          'value' => ($val['value']) ? 'callable' : 'no callable',
+          'dev_value' => ($val['dev_value']) ? 'callable' : 'no callable',
+          'operation' => $val['operation'],
+          'type' => 'functions_classes',
+          'tag' => $val['tag'],
+          'how_to_fix' => $val['how_to_fix'],
+
+        ];
+      }
+    }
+    //extensions
+    foreach ($checklist['extensions'] as $k => $val) {
+      $your_value = extension_loaded($k);
+      if ($your_value !== $val['value']) {
+        $return_recommendations[] = [
+          'title' => $val['title'],
+          'your_value' => ($your_value) ? 'extension loaded' : 'extension unloaded',
+          'value' => ($val['value']) ? 'extension loaded' : 'extension unloaded',
+          'dev_value' => ($val['dev_value']) ? 'extension loaded' : 'extension unloaded',
+          'operation' => null,
+          'type' => 'extensions',
+          'tag' => $val['tag'],
+          'how_to_fix' => $val['how_to_fix'],
+        ];
+      }
+    }
+    //softawres
+    //php
+    if (!version_compare(phpversion(), $checklist['softawres']['php'], '>=')) {
+      $return_recommendations[] = [
+        'title' => 'php',
+        'your_value' => phpversion(),
+        'value' => $checklist['softawres']['php'],
+        'dev_value' => null,
+        'operation' => null,
+        'type' => 'softwares',
+        'info' => 'php version must be larger than ' . $checklist['softawres']['php'],
+        'tag' => 'software',
+        'how_to_fix' => 'install new version',
+      ];
+    }
+    //mysql
+    $mysql_version = @(new ServerCheck($MYSQL_CONFIG))->GetMysqlVersion();
+    if ($mysql_version && !version_compare($mysql_version, $checklist['softawres']['mysql'], '>=')) {
+      $return_recommendations[] = [
+        'title' => 'mysql',
+        'your_value' => $mysql_version,
+        'value' => $checklist['softawres']['mysql'],
+        'dev_value' => null,
+        'operation' => null,
+        'type' => 'softwares',
+        'tag' => 'software',
+        'info' => 'mysql version must be larger than ' . $checklist['softawres']['mysql'],
+        'how_to_fix' => 'install new version',
+      ];
+    }
+    unset($mysql_version);
+
+    //composer
+    $composer_version = (new ServerCheck())->getComposerVersion();
+    if ($composer_version && !version_compare($composer_version, $checklist['softawres']['composer'], '>=')) {
+      $return_recommendations[] = [
+        'title' => 'composer',
+        'your_value' => $composer_version,
+        'value' => $checklist['softawres']['composer'],
+        'dev_value' => null,
+        'operation' => null,
+        'type' => 'softwares',
+        'tag' => 'software',
+        'info' => 'composer version must be larger than ' . $checklist['softawres']['composer'],
+        'how_to_fix' => 'install new version',
+      ];
+    }
+    unset($composer_version);
+
+    //webserver
+    $webserver = (new ServerCheck())->getWebServerEnvironment();
+    $webserver_version = (new ServerCheck())->getWebServerVersion();
+    if (isset($checklist['softawres']['webservers'][$webserver])) {
+      if (!version_compare((new ServerCheck())->getWebServerVersion(), $checklist['softawres']['webservers'][$webserver], '>=')) {
+        $return_recommendations[] = [
+          'title' => $webserver,
+          'your_value' => $webserver_version,
+          'value' => $checklist['softawres']['webservers'][$webserver],
+          'dev_value' => null,
+          'operation' => null,
+          'type' => 'softwares',
+          'tag' => 'software',
+          'info' => $webserver . ' version must be larger than ' . $checklist['softawres']['webservers'][$webserver],
+          'how_to_fix' => 'install new version',
+        ];
+      }
+    }
+    unset($webserver, $webserver_version);
+
+    file_put_contents('log.txt', var_export($return_recommendations, true));
+    return $return_recommendations;
+  }
+}
+
+class ErrorReporting
+{
+  protected $levels = [
+    1 => 'E_ERROR',
+    2 => 'E_WARNING',
+    4 => 'E_PARSE',
+    8 => 'E_NOTICE',
+    16 => 'E_CORE_ERROR',
+    32 => 'E_CORE_WARNING',
+    64 => 'E_COMPILE_ERROR',
+    128 => 'E_COMPILE_WARNING',
+    256 => 'E_USER_ERROR',
+    512 => 'E_USER_WARNING',
+    1024 => 'E_USER_NOTICE',
+    2048 => 'E_STRICT',
+    4096 => 'E_RECOVERABLE_ERROR',
+    8192 => 'E_DEPRECATED',
+    16384 => 'E_USER_DEPRECATED'
+  ];
+
+  protected $level;
+
+  public function __construct()
+  {
+    $this->level = error_reporting();
+  }
+
+  public function getErrorLevel()
+  {
+    $included = $this->_getIncluded();
+
+    $errorLevel = $this->_getErrorDescription($included);
+
+    return $errorLevel;
+  }
+
+  public function _getIncluded()
+  {
+    $included = array();
+
+    foreach ($this->levels as $levelInt => $levelText) {
+      // This is where we check if a level was used or not
+      if ($this->level && $levelInt) {
+        $included[] = $levelInt;
+      }
+    }
+
+    return $included;
+  }
+
+  protected function _getErrorDescription($included)
+  {
+    $description = '';
+
+    $all = count($this->levels);
+
+    $values = array();
+    if (count($included) > $all / 2) {
+      $values[] = 'E_ALL';
+
+      foreach ($this->levels as $levelInt => $levelText) {
+        if (!in_array($levelInt, $included)) {
+          $values[] = $levelText;
+        }
+      }
+      $description = implode(' &amp; ~', $values);
+    } else {
+      foreach ($included as $levelInt) {
+        $values[] = $this->levels[$levelInt];
+      }
+      $description = implode(' | ', $values);
+    }
+
+    return $description;
+  }
+}
+
 //Download Update
 if (isset($_GET['Download_Update'])) {
   if ((new Helper)->downloadUpdate()) {
@@ -827,6 +1205,7 @@ if (isset($_GET['Download_Update'])) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PaL Server Info - <?php echo $_VERSION; ?></title>
+  <meta name="show_recommendation" content="<?php echo isset($recommendations); ?>">
   <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAABABAQAAAQAAEAEBAAABAAAQAQEAAAEREBERAREQAQAQEAEBABABABAQAQEAEAEREBABAREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAL2vAAC9rwAAva8AAIQhAAC1rQAAta0AAIWhAAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA" rel="icon" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -997,6 +1376,38 @@ if (isset($_GET['Download_Update'])) {
       height: 64px;
     }
 
+    .recommendations_row {
+      margin: 12px auto;
+      border-bottom: 1px solid #CDCDCD;
+      background-color: #f1f1f1;
+      padding: 8px 0;
+      border-radius: 8px;
+      box-shadow: 0px 1px 4px -2px #9b9b9b;
+      line-height: 1.5em;
+    }
+
+    .recommendations_row .recommendations_content {
+      word-wrap: break-word;
+    }
+
+    .recommendations_title {
+      border-left: 5px solid #59add3;
+      padding: 4px 12px;
+      background-color: #495fd5;
+      color: #EFEFEF;
+      border-radius: 5px;
+    }
+
+    .code_box {
+      background-color: #38383c;
+      width: 100%;
+      display: block;
+      padding: 2em;
+      margin: 8px auto;
+      border-radius: 8px;
+    }
+
+
     #footer {
       margin: 24px auto 0;
       color: #303030;
@@ -1054,19 +1465,26 @@ if (isset($_GET['Download_Update'])) {
           <div class="accordion-item">
             <h2 class="accordion-header">
               <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                Benchmarks
+                ToolBox
               </button>
             </h2>
             <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionBenchmark">
               <div class="accordion-body">
-                <h5>PHP And Mysql Benchmark</h5>
-                <p class="text-muted">This tool performs a benchmark test on MySQL database and PHP server.</p>
                 <p class="text-muted">
                   <span class="material-symbols-outlined text-warning pulse-animation">privacy_tip</span>
                   Don't forget to enter the mysql username and password in '<?php echo basename($_SERVER["SCRIPT_FILENAME"]); ?>' on line 22
                 </p>
+                <h5>PHP And Mysql Benchmark</h5>
+                <p class="text-muted">This tool performs a benchmark test on MySQL database and PHP server.</p>
+
                 <a href="?Benchmark&laravel_version=<?php echo $laravel_version_select; ?>" class="btn btn-outline-primary mt-2 mx-2">Php Benchmark</a>
                 <a href="?Mysql-Benchmark&laravel_version=<?php echo $laravel_version_select; ?>" class="btn btn-outline-primary mt-2 mx-2">Mysql Benchmark</a>
+                <hr>
+                <h5>Scan PHP Configurations</h5>
+                <p class="text-muted">This tool checks PHP settings for performance and security.</p>
+
+                <a href="?Recommendations&laravel_version=<?php echo $laravel_version_select; ?>" class="btn btn-outline-primary mt-2 mx-2">Scan Now</a>
+
               </div>
             </div>
           </div>
@@ -1253,6 +1671,65 @@ if (isset($_GET['Download_Update'])) {
 
   </main>
   <!-- End #main -->
+  <!-- Recommendations Modal -->
+  <?php
+  if (isset($recommendations)) :
+  ?>
+    <div class="modal fade" id="RecommendationsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="RecommendationsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-fullscreen">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5 text-dark" id="RecommendationsModalLabel">Recommendations</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-dark bg-secondary">
+            <?php
+
+            foreach ($recommendations as $k => $val) :
+            ?>
+              <div class="row recommendations_row">
+                <?php
+
+                ?>
+                <div class="col-12 recommendations_content my-3">
+                  <h5><span class="recommendations_title"><?php echo $val['title']; ?></span></h5>
+                </div>
+                <div class="col-12 col-md-4 recommendations_content text-primary">
+                  <h6>Your Value: <span class="text-dark"><?php echo $val['your_value']; ?></span></h6>
+                </div>
+                <div class="col-12 col-md-4 recommendations_content text-success">
+                  <h6>Production Value: <span class="text-dark"><?php echo $val['value']; ?></span> </h6>
+                </div>
+                <div class="col-12 col-md-4 recommendations_content text-info">
+                  <h6>Development Value: <span class="text-dark"><?php echo $val['dev_value']; ?></span> </h6>
+                </div>
+                <div class="col-12 recommendations_content mt-3">
+                  <h6>How to Fix?</h6>
+                  <span class="badge bg-info"><?php echo $val['tag']; ?></span>
+                  <code class="code_box">
+                    <?php echo $val['how_to_fix']; ?>
+                  </code>
+                </div>
+
+                <?php
+
+                ?>
+              </div>
+            <?php
+            endforeach;
+
+            ?>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  <?php
+  endif;
+  ?>
+  <!--End Recommendations Modal -->
   <!-- Bootstrap Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <!-- Jquery slim Script -->
@@ -1338,7 +1815,14 @@ if (isset($_GET['Download_Update'])) {
       });
 
       // Update the browser history state
-      history.replaceState({}, 'Pal-Server-Check.php', '/Pal-Server-Check.php');
+      history.replaceState({}, 'Pal-Server-Info.php', '/Pal-Server-Info.php');
+
+
+      if ($('meta[name="show_recommendation"]').attr('content') == '1') {
+        var myModal = new bootstrap.Modal(document.getElementById('RecommendationsModal'))
+        myModal.show();
+      }
+
 
       console.log('The program was successfully executed.');
     });
