@@ -1107,7 +1107,7 @@ class Recommendations
     }
     unset($webserver, $webserver_version);
 
-    file_put_contents('log.txt', var_export($return_recommendations, true));
+    //file_put_contents('log.txt', var_export($return_recommendations, true));
     return $return_recommendations;
   }
 }
