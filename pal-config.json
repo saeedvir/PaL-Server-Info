@@ -1,0 +1,549 @@
+{
+    "ini_settings": {
+        "memory_limit": {
+            "value": "256M",
+            "dev_value": "512M",
+            "operation": ">=",
+            "title": "memory_limit",
+            "tag": "performance",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "max_execution_time": {
+            "value": "30",
+            "dev_value": "300",
+            "operation": ">=",
+            "title": "max_execution_time",
+            "tag": "performance",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "post_max_size": {
+            "value": "32M",
+            "dev_value": "32M",
+            "operation": ">=",
+            "title": "post_max_size",
+            "tag": "informations",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "upload_max_filesize": {
+            "value": "32M",
+            "dev_value": "32M",
+            "operation": ">=",
+            "title": "upload_max_filesize",
+            "tag": "informations",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "max_input_time": {
+            "value": "60",
+            "dev_value": "300",
+            "operation": ">=",
+            "title": "max_input_time",
+            "tag": "informations",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "max_input_vars": {
+            "value": "1000",
+            "dev_value": "5000",
+            "operation": ">=",
+            "title": "max_input_vars",
+            "tag": "informations",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "max_file_uploads": {
+            "value": "20",
+            "dev_value": "20",
+            "operation": ">=",
+            "title": "max_file_uploads",
+            "tag": "informations",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "file_uploads": {
+            "value": "On",
+            "dev_value": "On",
+            "operation": "==",
+            "title": "file_uploads",
+            "tag": "informations",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "max_request_size": {
+            "value": "32M",
+            "dev_value": "32M",
+            "operation": ">=",
+            "title": "max_request_size",
+            "tag": "informations",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "display_errors": {
+            "value": "Off",
+            "dev_value": "On",
+            "operation": "==",
+            "title": "display_errors",
+            "tag": "errors",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "error_reporting": {
+            "value": "E_ALL & ~E_DEPRECATED & ~E_STRICT",
+            "dev_value": "E_ALL",
+            "operation": "==",
+            "title": "error_reporting",
+            "tag": "errors",
+            "type": "string",
+            "how_to_fix": "Edit php.ini"
+        },
+        "display_startup_errors": {
+            "value": "Off",
+            "dev_value": "On",
+            "operation": "==",
+            "title": "display_startup_errors",
+            "tag": "errors",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "log_errors": {
+            "value": "On",
+            "dev_value": "On",
+            "operation": "==",
+            "title": "log_errors",
+            "tag": "errors",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "html_errors": {
+            "value": "On",
+            "dev_value": "On",
+            "operation": "==",
+            "title": "html_errors",
+            "tag": "errors",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "error_log": {
+            "value": "",
+            "dev_value": "",
+            "operation": "not_empty",
+            "title": "error_log",
+            "tag": "errors",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "short_open_tag": {
+            "value": "Off",
+            "dev_value": "Off",
+            "operation": "==",
+            "title": "short_open_tag",
+            "tag": "performance",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "open_basedir": {
+            "value": "Off",
+            "dev_value": "On",
+            "operation": "==",
+            "title": "open_basedir",
+            "tag": "security",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "allow_url_fopen": {
+            "value": "On",
+            "dev_value": "On",
+            "operation": "==",
+            "title": "allow_url_fopen",
+            "tag": "security",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "allow_url_include": {
+            "value": "Off",
+            "dev_value": "Off",
+            "operation": "==",
+            "title": "allow_url_include",
+            "tag": "security",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "realpath_cache_size": {
+            "value": "4096k",
+            "dev_value": "4096k",
+            "operation": ">=",
+            "title": "realpath_cache_size",
+            "tag": "performance",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "realpath_cache_ttl": {
+            "value": "120",
+            "dev_value": "120",
+            "operation": ">=",
+            "title": "realpath_cache_ttl",
+            "tag": "performance",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "output_buffering": {
+            "value": "4096",
+            "dev_value": "4096",
+            "operation": ">=",
+            "title": "output_buffering",
+            "tag": "performance",
+            "type": "string_number",
+            "how_to_fix": "Edit php.ini"
+        },
+        "enable_dl": {
+            "value": "Off",
+            "dev_value": "Off",
+            "operation": "==",
+            "title": "enable_dl",
+            "tag": "security",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "safe_mode": {
+            "value": "Off",
+            "dev_value": "Off",
+            "operation": "==",
+            "title": "safe_mode",
+            "tag": "security",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "disable_functions": {
+            "value": "system,exec,shell_exec,passthru,phpinfo,show_source,highlight_file,popen,proc_open,fopen_with_path,dbmopen,dbase_open,putenv,move_uploaded_file,chdir,mkdir,rmdir,chmod,rename,filepro,filepro_rowcount,filepro_retrieve,posix_mkfifo",
+            "dev_value": "",
+            "operation": "not_empty",
+            "title": "disable_functions",
+            "tag": "security",
+            "type": "string",
+            "how_to_fix": "Edit php.ini"
+        },
+        "expose_php": {
+            "value": "Off",
+            "dev_value": "Off",
+            "operation": "==",
+            "title": "expose_php",
+            "tag": "security",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "pcre.jit": {
+            "value": "On",
+            "dev_value": "On",
+            "operation": "==",
+            "title": "pcre.jit",
+            "tag": "performance",
+            "type": "boolean",
+            "how_to_fix": "Edit php.ini"
+        },
+        "zend_extension": {
+            "value": "opcache",
+            "dev_value": "opcache",
+            "operation": "==",
+            "title": "zend_extension opcache",
+            "tag": "performance",
+            "type": "string",
+            "how_to_fix": "Edit php.ini And Enable opcache"
+        }
+    },
+    "functions_classes": {
+        "eval": {
+            "value": false,
+            "dev_value": true,
+            "type": "function",
+            "title": "eval",
+            "operation": "function_exists",
+            "tag": "security",
+            "how_to_fix": "Edit php.ini And add to `disable_functions`"
+        },
+        "exec": {
+            "value": false,
+            "dev_value": true,
+            "type": "function",
+            "title": "exec",
+            "operation": "function_exists",
+            "tag": "security",
+            "how_to_fix": "Edit php.ini And add to `disable_functions`"
+        },
+        "shell_exec": {
+            "value": false,
+            "dev_value": true,
+            "type": "function",
+            "title": "shell_exec",
+            "operation": "function_exists",
+            "tag": "security",
+            "how_to_fix": "Edit php.ini And add to `disable_functions`"
+        },
+        "passthru": {
+            "value": false,
+            "dev_value": true,
+            "type": "function",
+            "title": "passthru",
+            "operation": "function_exists",
+            "tag": "security",
+            "how_to_fix": "Edit php.ini And add to `disable_functions`"
+        },
+        "system": {
+            "value": false,
+            "dev_value": true,
+            "type": "function",
+            "title": "system",
+            "operation": "function_exists",
+            "tag": "security",
+            "how_to_fix": "Edit php.ini And add to `disable_functions`"
+        },
+        "popen": {
+            "value": false,
+            "dev_value": true,
+            "type": "function",
+            "title": "popen",
+            "operation": "function_exists",
+            "tag": "security",
+            "how_to_fix": "Edit php.ini And add to `disable_functions`"
+        },
+        "proc_open": {
+            "value": false,
+            "dev_value": true,
+            "type": "function",
+            "title": "proc_open",
+            "operation": "function_exists",
+            "tag": "security",
+            "how_to_fix": "Edit php.ini And add to `disable_functions`"
+        },
+        "pcntl_exec": {
+            "value": false,
+            "dev_value": true,
+            "type": "function",
+            "title": "pcntl_exec",
+            "operation": "function_exists",
+            "tag": "security",
+            "how_to_fix": "Edit php.ini And add to `disable_functions`"
+        },
+        "apcu_enabled": {
+            "value": true,
+            "dev_value": true,
+            "type": "function",
+            "title": "apcu_enabled",
+            "operation": "function_exists",
+            "tag": "performance",
+            "how_to_fix": "Edit php.ini And install apcu"
+        },
+        "opcache_get_status": {
+            "value": true,
+            "dev_value": true,
+            "type": "function",
+            "title": "opcache_get_status",
+            "operation": "function_exists",
+            "tag": "performance",
+            "how_to_fix": "Edit php.ini And install opcache"
+        },
+        "Memcache": {
+            "value": true,
+            "dev_value": true,
+            "type": "class",
+            "title": "Memcache",
+            "operation": "class_exists",
+            "tag": "performance",
+            "how_to_fix": "Edit php.ini And install Memcache"
+        },
+        "mysqli": {
+            "value": true,
+            "dev_value": true,
+            "type": "class",
+            "title": "mysqli",
+            "operation": "class_exists",
+            "tag": "database",
+            "how_to_fix": "Edit php.ini And install mysqli extention"
+        },
+        "PDO": {
+            "value": true,
+            "dev_value": true,
+            "type": "class",
+            "title": "PDO",
+            "operation": "class_exists",
+            "tag": "database",
+            "how_to_fix": "Edit php.ini And install pdo extention"
+        }
+    },
+    "extensions": {
+        "xdebug": {
+            "value": false,
+            "dev_value": true,
+            "title": "xdebug",
+            "tag": "debug",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "curl": {
+            "value": true,
+            "dev_value": true,
+            "title": "curl",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "fileinfo": {
+            "value": true,
+            "dev_value": true,
+            "title": "fileinfo",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "gd": {
+            "value": true,
+            "dev_value": true,
+            "title": "gd",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "intl": {
+            "value": true,
+            "dev_value": true,
+            "title": "intl",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "mbstring": {
+            "value": true,
+            "dev_value": true,
+            "title": "mbstring",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "exif": {
+            "value": true,
+            "dev_value": true,
+            "title": "exif",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "mysqli": {
+            "value": true,
+            "dev_value": true,
+            "title": "mysqli",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "openssl": {
+            "value": true,
+            "dev_value": true,
+            "title": "openssl",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "pdo_mysql": {
+            "value": true,
+            "dev_value": true,
+            "title": "pdo_mysql",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "soap": {
+            "value": true,
+            "dev_value": true,
+            "title": "soap",
+            "tag": "recommended",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "xsl": {
+            "value": true,
+            "dev_value": true,
+            "title": "xsl",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "zip": {
+            "value": true,
+            "dev_value": true,
+            "title": "zip",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "xml": {
+            "value": true,
+            "dev_value": true,
+            "title": "xml",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "ctype": {
+            "value": true,
+            "dev_value": true,
+            "title": "ctype",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "dom": {
+            "value": true,
+            "dev_value": true,
+            "title": "dom",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "filter": {
+            "value": true,
+            "dev_value": true,
+            "title": "filter",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "hash": {
+            "value": true,
+            "dev_value": true,
+            "title": "hash",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "pcre": {
+            "value": true,
+            "dev_value": true,
+            "title": "pcre",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "session": {
+            "value": true,
+            "dev_value": true,
+            "title": "session",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "tokenizer": {
+            "value": true,
+            "dev_value": true,
+            "title": "tokenizer",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "json": {
+            "value": true,
+            "dev_value": true,
+            "title": "json",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        },
+        "bcmath": {
+            "value": true,
+            "dev_value": true,
+            "title": "bcmath",
+            "tag": "important",
+            "how_to_fix": "Edit php.ini And install extention"
+        }
+    },
+    "softawres": {
+        "webservers": {
+            "Apache": "2.4.58",
+            "Nginx": "1.24.0",
+            "Lighttpd": "1.4.74"
+        },
+        "php": "8.2",
+        "mysql": "8.0",
+        "composer": "2.7.1",
+        "node": "20.11.1"
+    }
+}
