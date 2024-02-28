@@ -38,6 +38,8 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 <!-- GETTING STARTED -->
 ## Getting Started
 
+download "Pal-Server-Info.php"
+
 Just copy the file to your server or host and call it.
 
 ### Example
@@ -58,6 +60,10 @@ Or
   http://127.0.0.1/Pal-Server-Info.php
   ```
 
+### Php Scan Configuration
+
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-4.png)
+
 ### Php And Mysql Benchmark Config
 
 ![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-2.png)
@@ -75,6 +81,10 @@ Or
    ```
 2. Refresh Your Browser
 
+## How To Customize PHP Configuration Scan
+Download the "pal-config.json" file
+You can edit this file
+
 ## How To Update
 Just click on "Check for Update" at the bottom of the page (footer)
 
@@ -83,9 +93,9 @@ Just click on "Check for Update" at the bottom of the page (footer)
 <!-- CONTACT -->
 ## Contact
 
-Saeed Abdollahian - [@PhpWebDeveloper]([https://twitter.com/twitter_handle](https://t.me/PhpWebDeveloper)) - saeed.es91@gmail.com
+Telegram:
+Saeed Abdollahian - [@PhpWebDeveloper]([https://t.me/PhpWebDeveloper](https://t.me/PhpWebDeveloper)) - saeed.es91@gmail.com
 
 Project Link: [https://github.com/saeedvir/PaL-Server-Info](https://github.com/saeedvir/PaL-Server-Info)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-[product-screenshot]: images-1.png
