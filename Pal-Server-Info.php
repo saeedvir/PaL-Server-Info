@@ -6,7 +6,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.0 (Last Update : 2024-02-26)
+ * @version  1.1 (Last Update : 2024-02-28)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
