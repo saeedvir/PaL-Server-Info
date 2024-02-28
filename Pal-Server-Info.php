@@ -476,7 +476,7 @@ class Helper
 
   public function downloadUpdate()
   {
-    $url = 'https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/Pal-Server-Check.php';
+    $url = 'https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/Pal-Server-Info.php';
 
     $download_content = $this->httpGet($url);
 
