@@ -38,7 +38,7 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 <!-- GETTING STARTED -->
 ## Getting Started
 
-download "Pal-Server-Info.php"
+download "[Pal-Server-Info.php](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/Pal-Server-Info.php)"
 
 Just copy the file to your server or host and call it.
 
