@@ -1,7 +1,7 @@
 <?php
 /**
  * Php And Laravel (PaL) Server Info
- * Test on PHP version >= 8.2
+ * Test on PHP version >= 7.4.33
  * @category Server, Benchmark, Php, Laravel, Mysql
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
@@ -443,7 +443,7 @@ class Helper
     }, $str);
   }
 
-  public function httpGet($url)
+  public function httpGet($url,$download_as_file=null)
   {
     if (function_exists('curl_init')) {
       $cURLConnection = curl_init();
@@ -455,6 +455,10 @@ class Helper
       curl_close($cURLConnection);
     } else {
       $response = file_get_contents($url);
+    }
+
+    if($download_as_file){
+      file_put_contents($download_as_file,$response);
     }
 
     return $response;
@@ -879,7 +883,7 @@ class Recommendations
 
     $response = file_exists($configPath)
       ? file_get_contents($configPath)
-      : (new Helper)->httpGet($configUrl);
+      : (new Helper)->httpGet($configUrl,'pal-config.json');
 
     if(empty($response) || $response === '404: Not Found'){
       die('pal-config.json Error');
@@ -1107,7 +1111,7 @@ class Recommendations
     }
     unset($webserver, $webserver_version);
 
-    //file_put_contents('log.txt', var_export($return_recommendations, true));
+    file_put_contents('log.txt', var_export($return_recommendations, true));
     return $return_recommendations;
   }
 }
@@ -1817,7 +1821,7 @@ if (isset($_GET['Download_Update'])) {
       // Update the browser history state
       history.replaceState({}, 'Pal-Server-Info.php', '/Pal-Server-Info.php');
 
-
+      //Check for Show Modal
       if ($('meta[name="show_recommendation"]').attr('content') == '1') {
         var myModal = new bootstrap.Modal(document.getElementById('RecommendationsModal'))
         myModal.show();
