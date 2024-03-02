@@ -81,6 +81,17 @@ Or
    ```
 2. Refresh Your Browser
 
+## How To Use CLI Mode?
+Download the "PaL-cli.php" file
+and use :
+  ```sh
+  php PaL-cli.php h
+  php PaL-cli.php -i -s -o -r
+  ```
+
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-5.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-6.png)
+
 ## How To Customize PHP Configuration Scan
 Download the "pal-config.json" file
 You can edit this file
