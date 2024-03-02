@@ -1644,7 +1644,7 @@ if ($cliHelper->getConfig('v')) {
 
 //Check for update and Download Update
 if ($cliHelper->getConfig('up')) {
-    $cliHelper->printMessage($cliHelper->headerMessage('Selft Updating'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
+    $cliHelper->printMessage($cliHelper->headerMessage('Self Updating'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
 
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'Checking for update ...');
 
