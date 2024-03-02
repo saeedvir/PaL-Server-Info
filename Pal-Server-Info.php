@@ -6,7 +6,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.1 (Last Update : 2024-02-28)
+ * @version  1.2 (Last Update : 2024-03-02)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
@@ -16,8 +16,12 @@ if (version_compare(PHP_VERSION, '5.6') < 0) {
   echo 'This script requires PHP 5.6 or higher.';
   exit(1);
 }
+if ((new ServerCheck())->getWebServerEnvironment() === 'CLI') {
+  echo 'This script Only Run in Browser. You download cli version from https://github.com/saeedvir/PaL-Server-Info';
+  exit(1);
+}
 //Initialise Variables
-$_VERSION = 'v 1.1'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.2'; //Current Version , Don't change this !!!
 
 $MYSQL_CONFIG = [
   'host' => 'localhost',
@@ -27,6 +31,7 @@ $MYSQL_CONFIG = [
   'benchmark_insert' => 100,      //ex : 100
 ];
 
+$_SCRIPT_FILE = basename(__FILE__);
 
 $laravel_version_select = (!empty($_GET['laravel_version'])) ? $_GET['laravel_version'] : '10.x';
 
@@ -58,8 +63,24 @@ class ServerRequirements
   private $laravel_version;
   public function __construct($laravel_version = '10.x')
   {
-    $this->laravel_version = $laravel_version;
+
+    $this->laravel_version = $this->setLaravelVersion($laravel_version);
   }
+
+  public function setLaravelVersion($laravel_version = '10.x')
+  {
+    $laravel_version = (string)$laravel_version;
+
+    $laravel_versions = ['10.x', '9.x', '8.x', '7.x', '6.x', '5.8'];
+    if (in_array($laravel_version, $laravel_versions) !== false) {
+      $this->laravel_version = $laravel_version;
+    } else {
+      $this->laravel_version = '10.x';
+    }
+
+    return $this->laravel_version;
+  }
+
 
   /**
    * ServerInfoList function to retrieve server information.
@@ -225,6 +246,8 @@ class ServerRequirements
 
     ];
 
+    $laravel_version = $this->setLaravelVersion($laravel_version);
+
     if (!isset($laravel_requirements[$laravel_version])) {
       $laravel_requirements['10.x'];
     }
@@ -257,7 +280,8 @@ class ServerCheck
     $sapi_type = php_sapi_name();
 
     $server_environments = [
-      'cli-server' => 'PHP CLI',
+      'cli' => 'CLI',
+      'cli-server' => 'PHP CLI Server',
       'cgi-fcgi' => 'Nginx',
       'fpm-fcgi' => 'Nginx',
       'apache2handler' => 'Apache',
@@ -338,7 +362,7 @@ class ServerCheck
 
       return $version;
     } catch (Exception $e) {
-      return 'Error - Check Mysql Config on line 22';
+      return 'Error - Check Mysql Config on line 26';
     }
   }
 
@@ -389,16 +413,22 @@ class Helper
    * @param string $value The value to be checked
    * @return bool
    */
+
   public function checkBoolean($value)
   {
-    $value = strtolower($value);
-    return in_array($value, ['true', '1', 'yes', 'on']);
+    $value = strtolower((string)$value);
+    if (in_array($value, ['true', '1', 'yes', 'on', 'ok', 'passed'])) {
+      return true;
+    } elseif (in_array($value, ['false', '0', 'no', 'off', 'nok', 'failed'])) {
+      return false;
+    }
+    return null;
   }
 
-  public function booleanToString($value)
+  public function booleanToString($value, $bool_str = ['true' => 'On', 'false' => 'Off'])
   {
     $value = strtolower($value);
-    return in_array($value, ['true', '1', 'yes', 'on']) !== false ? 'On' : 'Off';
+    return in_array($value, ['true', '1', 'yes', 'on', 'ok', 'passed']) !== false ? $bool_str['true'] : $bool_str['false'];
   }
 
   public function getNumbersFromString($str)
@@ -443,7 +473,7 @@ class Helper
     }, $str);
   }
 
-  public function httpGet($url,$download_as_file=null)
+  public function httpGet($url, $download_as_file = null)
   {
     if (function_exists('curl_init')) {
       $cURLConnection = curl_init();
@@ -457,8 +487,8 @@ class Helper
       $response = file_get_contents($url);
     }
 
-    if($download_as_file){
-      file_put_contents($download_as_file,$response);
+    if ($download_as_file) {
+      file_put_contents($download_as_file, $response);
     }
 
     return $response;
@@ -883,9 +913,9 @@ class Recommendations
 
     $response = file_exists($configPath)
       ? file_get_contents($configPath)
-      : (new Helper)->httpGet($configUrl,'pal-config.json');
+      : (new Helper)->httpGet($configUrl, 'pal-config.json');
 
-    if(empty($response) || $response === '404: Not Found'){
+    if (empty($response) || $response === '404: Not Found') {
       die('pal-config.json Error');
     }
     return json_decode($response, true);
@@ -946,7 +976,7 @@ class Recommendations
         return !class_exists($val1);
         break;
       default:
-      return false;
+        return false;
         break;
     }
   }
@@ -1476,7 +1506,7 @@ if (isset($_GET['Download_Update'])) {
               <div class="accordion-body">
                 <p class="text-muted">
                   <span class="material-symbols-outlined text-warning pulse-animation">privacy_tip</span>
-                  Don't forget to enter the mysql username and password in '<?php echo basename($_SERVER["SCRIPT_FILENAME"]); ?>' on line 22
+                  Don't forget to enter the mysql username and password in '<?php echo basename($_SERVER["SCRIPT_FILENAME"]); ?>' on line 26
                 </p>
                 <h5>PHP And Mysql Benchmark</h5>
                 <p class="text-muted">This tool performs a benchmark test on MySQL database and PHP server.</p>
@@ -1603,7 +1633,7 @@ if (isset($_GET['Download_Update'])) {
             unset($benchmark_results);
           else :
           ?>
-            <div class="alert alert-warning">Error in Mysql Connection - Check Mysql Config on line 22</div>
+            <div class="alert alert-warning">Error in Mysql Connection - Check Mysql Config on line 26</div>
             <!-- End Mysql Benchmark Box -->
         <?php
           endif;
@@ -1651,18 +1681,23 @@ if (isset($_GET['Download_Update'])) {
       <!-- End .Content-Box -->
       <!-- #footer -->
       <div id="footer" class="roboto roboto-regular roboto-italic text-center">
-        <div class="row">
-          <div class="col-md-4 col-12">
+        <div class="row pt-3">
+          <div class="col-md-3 col-12">
             <p>
               <a target="_blank" href="https://github.com/saeedvir/PaL-Server-Info"><span class="material-symbols-outlined">language</span> PaL-Server-Info</a> | <?php echo $_VERSION; ?>
             </p>
           </div>
-          <div class="col-md-4 col-12">
+          <div class="col-md-3 col-12">
+            <p>
+              <a target="_blank" href="https://github.com/saeedvir/PaL-Server-Info/issues"><span class="material-symbols-outlined">bug_report</span> Report A Bug Or Request A Feature</a>
+            </p>
+          </div>
+          <div class="col-md-3 col-12">
             <p>
               <span class="material-symbols-outlined text-danger">code</span> Developed By : <a href="https://github.com/saeedvir" target="_blank">Saeed Abdollahian</a>
             </p>
           </div>
-          <div class="col-md-4 col-12">
+          <div class="col-md-3 col-12">
             <p><a href="?Check-For-Update"><span class="material-symbols-outlined">update</span> Check For Update</a></p>
           </div>
           <div class="col-12">
@@ -1819,7 +1854,7 @@ if (isset($_GET['Download_Update'])) {
       });
 
       // Update the browser history state
-      history.replaceState({}, 'Pal-Server-Info.php', '/Pal-Server-Info.php');
+      history.replaceState({}, '<?php echo $_SCRIPT_FILE; ?>', '/<?php echo $_SCRIPT_FILE; ?>');
 
       //Check for Show Modal
       if ($('meta[name="show_recommendation"]').attr('content') == '1') {
