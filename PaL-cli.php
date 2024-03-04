@@ -1293,7 +1293,17 @@ class Recommendations
     {
         $configPath = 'pal-config.json';
         $configUrl = 'https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/pal-config.json';
-
+        
+        //remove old file
+        if (file_exists($configPath)) {
+            $configDate = date_diff(date_create(date('Y-m-d H:i:s', time())), date_create(date('Y-m-d H:i:s', filectime($configPath))));
+    
+            if ($configDate->d > 0) {
+                @unlink($configPath);
+                usleep(200);
+            }
+        }
+        
         $response = file_exists($configPath)
             ? file_get_contents($configPath)
             : (new Helper)->httpGet($configUrl, 'pal-config.json');
