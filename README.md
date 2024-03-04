@@ -114,6 +114,11 @@ You can edit this file
 ## How To Update
 Just click on "Check for Update" at the bottom of the page (footer)
 
+in cli you can use :
+```sh
+php PaL-cli.php up
+```
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- CONTACT -->
