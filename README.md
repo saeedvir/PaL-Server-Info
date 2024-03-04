@@ -31,6 +31,7 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 * Scan Web Server Headers
 * Php Benchmark
 * Mysql Benchmark
+* CLI mode
 
 ### Built With
 
