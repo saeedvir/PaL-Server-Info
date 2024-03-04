@@ -6,7 +6,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.2 (Last Update : 2024-03-02)
+ * @version  1.3 (Last Update : 2024-03-04)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
@@ -15,8 +15,8 @@
 /**
  * Usage
  * php PaL-cli.php -l 10.x -i -c -o -s -r
- * php PaL-cli.php up
- * php PaL-cli.php h
+ * php PaL-cli.php -wh "https://www.example.com"
+ * php PaL-cli.php help
  */
 if (version_compare(PHP_VERSION, '5.6') < 0) {
     echo 'This script requires PHP 5.6 or higher.';
@@ -27,7 +27,7 @@ if ((new ServerCheck())->getWebServerEnvironment() !== 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.2'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.3'; //Current Version , Don't change this !!!
 
 $MYSQL_CONFIG = [
     'host' => 'localhost',
@@ -244,6 +244,18 @@ class CliHelper
     {
         if (isset($this->cli_configs[$config_key])) {
             return $this->cli_configs[$config_key];
+        } else {
+            return $config_default;
+        }
+    }
+    public function getConfigWithArgv($argv, $config_key, $ret_param = false, $config_default = null)
+    {
+        $arg_key = array_search($config_key, $argv);
+        if ($arg_key !== false) {
+            if ($ret_param) {
+                return isset($argv[$arg_key + 1]) ? $argv[$arg_key + 1] : $config_default;
+            }
+            return $argv[$arg_key];
         } else {
             return $config_default;
         }
@@ -766,6 +778,160 @@ class ServerCheck
             ", Group - " . (($permissions & 0x0080) ? "1" : "0") .
             ", Others - " . (($permissions & 0x0040) ? "1" : "0");
     }
+
+    public function initCurlRequest($reqType, $reqURL, $reqBody = '', $headers = [])
+    {
+        if (!in_array($reqType, ['GET', 'POST', 'PUT', 'DELETE'])) {
+            throw new Exception('Curl first parameter must be "GET", "POST", "PUT" or "DELETE"');
+        }
+
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $reqURL);
+        curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        // curl_setopt($ch, CURLOPT_VERBOSE, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $reqType);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $reqBody);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_ENCODING, '');
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+
+        if (defined('CURLOPT_IPRESOLVE') && defined('CURL_IPRESOLVE_V4')) {
+            curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+        }
+
+        $body = curl_exec($ch);
+
+        // extract header
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $header = substr($body, 0, $headerSize);
+        $header = $this->getHeaders($header);
+
+        // extract body
+        $body = substr($body, $headerSize);
+
+        $curl_info = curl_getinfo($ch);
+
+        curl_close($ch);
+
+        return [$header, $body, $curl_info];
+    }
+
+    private function getHeaders($respHeaders)
+    {
+        $headers = array();
+
+        $headerText = substr($respHeaders, 0, strpos($respHeaders, "\r\n\r\n"));
+
+        foreach (explode("\r\n", $headerText) as $i => $line) {
+            if ($i === 0) {
+                $headers['http_code'] = $line;
+            } else {
+                list($key, $value) = explode(': ', $line);
+
+                $key = strtolower($key);
+                $headers[$key] = $value;
+            }
+        }
+
+        return $headers;
+    }
+
+
+    public function checkWebserverHeaders($url = null)
+    {
+        if (empty($url)) {
+            return [
+                'success' => false,
+                'message' => 'url is empty',
+                'headers' => null
+            ];
+        }
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+            return [
+                'success' => false,
+                'message' => 'url is not valid',
+                'headers' => null
+            ];
+        }
+        if (!function_exists('curl_init')) {
+            return [
+                'success' => false,
+                'message' => 'curl not installed',
+                'headers' => null
+            ];
+        }
+
+        list($header, $body, $curl_info) = (new ServerCheck())->initCurlRequest('GET', $url, '', ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36']);
+
+        if (empty($header)) {
+            return [
+                'success' => false,
+                'message' => 'no response , header is empty',
+                'headers' => null
+            ];
+        }
+        return [
+            'success' => true,
+            'message' => 'success',
+            'headers' => [
+                'http-code' => (isset($curl_info['http_code'])) ? $curl_info['http_code'] : null,
+                'header-size' => (isset($curl_info['header_size'])) ? (new Helper)->formatBytes($curl_info['header_size']) : null,
+                'request-size' => (isset($curl_info['request_size'])) ? (new Helper)->formatBytes($curl_info['request_size']) : null,
+                'total-time' => (isset($curl_info['total_time'])) ? $curl_info['total_time'] : null,
+                'namelookup-time' => (isset($curl_info['namelookup_time'])) ? $curl_info['namelookup_time'] : null,
+                'redirect-url' => (isset($curl_info['redirect_url'])) ? $curl_info['redirect_url'] : null,
+                'primary-ip' => (isset($curl_info['primary_ip'])) ? $curl_info['primary_ip'] : null,
+                'primary-port' => (isset($curl_info['primary_port'])) ? $curl_info['primary_port'] : null,
+                'scheme' => (isset($curl_info['scheme'])) ? $curl_info['scheme'] : null,
+
+                'connection' => (isset($header['connection'])) ? $header['connection'] : null,
+                'content-type' => (isset($header['content-type'])) ? $header['content-type'] : null,
+                'content-length' => (isset($header['content-length'])) ? $header['content-length'] : null,
+                'x-frame-options' => (isset($header['x-frame-options'])) ? $header['x-frame-options'] : null,
+                'x-xss-protection' => (isset($header['x-xss-protection'])) ? $header['x-xss-protection'] : null,
+                'permissions-policy' => (isset($header['permissions-policy'])) ? $header['permissions-policy'] : null,
+                'x-content-type-options' => (isset($header['x-content-type-options'])) ? $header['x-content-type-options'] : null,
+                'x-ua-compatible' => (isset($header['x-ua-compatible'])) ? $header['x-ua-compatible'] : null,
+                'accept-ranges' => (isset($header['accept-ranges'])) ? $header['accept-ranges'] : null,
+                'set-cookie' => (isset($header['set-cookie'])) ? $header['set-cookie'] : null,
+                'via' => (isset($header['via'])) ? $header['via'] : null,
+                'location' => (isset($header['location'])) ? $header['location'] : null,
+                'retry-after' => (isset($header['retry-after'])) ? $header['retry-after'] : null,
+                'content-disposition' => (isset($header['content-disposition'])) ? $header['content-disposition'] : null,
+                'content-language' => (isset($header['content-language'])) ? $header['content-language'] : null,
+
+                'x-dns-prefetch-control' => (isset($header['x-dns-prefetch-control'])) ? $header['x-dns-prefetch-control'] : null,
+                'x-cache-control' => (isset($header['x-cache-control'])) ? $header['x-cache-control'] : null,
+                'cache-control' => (isset($header['cache-control'])) ? $header['cache-control'] : null,
+                'content-encoding' => (isset($header['content-encoding'])) ? $header['content-encoding'] : null,
+                'expires' => (isset($header['expires'])) ? $header['expires'] : null,
+                'pragma' => (isset($header['pragma'])) ? $header['pragma'] : null,
+                'vary' => (isset($header['vary'])) ? $header['vary'] : null,
+                'etag' => (isset($header['etag'])) ? $header['etag'] : null,
+                'last-modified' => (isset($header['last-modified'])) ? $header['last-modified'] : null,
+                'transfer-encoding' => (isset($header['transfer-encoding'])) ? $header['transfer-encoding'] : null,
+                'x-powered-by' => (isset($header['x-powered-by'])) ? $header['x-powered-by'] : null,
+                'server' => (isset($header['server'])) ? $header['server'] : null,
+                'x-turbo-charged-by' => (isset($header['x-turbo-charged-by'])) ? $header['x-turbo-charged-by'] : null,
+
+            ],
+            'cors' => [
+                'access-control-allow-origin' => (isset($header['access-control-allow-origin'])) ? $header['access-control-allow-origin'] : null,
+                'access-control-allow-headers' => (isset($header['access-control-allow-headers'])) ? $header['access-control-allow-headers'] : null,
+                'access-control-allow-methods' => (isset($header['access-control-allow-methods'])) ? $header['access-control-allow-methods'] : null,
+                'access-control-allow-credentials' => (isset($header['access-control-allow-credentials'])) ? $header['access-control-allow-credentials'] : null,
+                'access-control-expose-headers' => (isset($header['access-control-expose-headers'])) ? $header['access-control-expose-headers'] : null,
+                'access-control-max-age' => (isset($header['access-control-max-age'])) ? $header['access-control-max-age'] : null,
+            ]
+
+        ];
+    }
 }
 
 class Helper
@@ -800,9 +966,9 @@ class Helper
     {
         $value = strtolower((string)$value);
         if (in_array($value, ['true', '1', 'yes', 'on', 'ok', 'passed'])) {
-          return true;
+            return true;
         } elseif (in_array($value, ['false', '0', 'no', 'off', 'nok', 'failed']) || empty($value)) {
-          return false;
+            return false;
         }
         return null;
     }
@@ -1293,17 +1459,18 @@ class Recommendations
     {
         $configPath = 'pal-config.json';
         $configUrl = 'https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/pal-config.json';
-        
+
         //remove old file
         if (file_exists($configPath)) {
             $configDate = date_diff(date_create(date('Y-m-d H:i:s', time())), date_create(date('Y-m-d H:i:s', filectime($configPath))));
-    
+
             if ($configDate->d > 0) {
                 @unlink($configPath);
                 usleep(200);
             }
         }
-        
+
+
         $response = file_exists($configPath)
             ? file_get_contents($configPath)
             : (new Helper)->httpGet($configUrl, 'pal-config.json');
@@ -1383,6 +1550,11 @@ class Recommendations
         $return_recommendations = [];
         //ini
         foreach ($checklist['ini_settings'] as $k => $val) {
+            if((new ServerCheck())->getWebServerEnvironment() === 'CLI'){
+                if(in_array($k,['max_execution_time','max_input_time'])){
+                    continue;
+                }
+            }
             $ini_data = ini_get($k);
             if ($val['type'] === 'string_number') {
                 if (!$this->operatorValue((new Helper)->stringNumber2Byte($ini_data), $val['operation'], (new Helper)->stringNumber2Byte($val['value']))) {
@@ -1536,6 +1708,51 @@ class Recommendations
 
         return $return_recommendations;
     }
+
+    public function getHeadersRecommendations($cliHelper, $headers)
+    {
+        if ($headers['http-code'] === 200) {
+            $headers['http-code'] .= ' ' . $cliHelper->getColoredString('Passed', 'green', 'black', false);
+        } elseif ($headers['http-code'] >= 500 || $headers['http-code'] < 200) {
+            $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'Request Failed !', ['fg_color' => 'red', 'bg_color' => 'black']);
+            $cliHelper->emptyLine("\n");
+
+            $headers['http-code'] .= ' ' . $cliHelper->getColoredString('Failed', 'red', 'black', false);
+        }
+
+        if ($headers['scheme'] === 'HTTPS') {
+            $headers['scheme'] .= ' ' . $cliHelper->getColoredString('Passed', 'green', 'black', false);
+        }
+
+        if (empty($headers['cache-control'])) {
+            $headers['cache-control'] .= ' ' . $cliHelper->getColoredString('(Empty)', 'red', 'black', false);
+        }
+        if (empty($headers['content-encoding'])) {
+            $headers['content-encoding'] .= ' ' . $cliHelper->getColoredString('(Empty)', 'red', 'black', false);
+        } elseif (stripos($headers['content-encoding'], 'gzip') !== false || stripos($headers['content-encoding'], 'deflate') !== false) {
+            $headers['content-encoding'] .= ' ' . $cliHelper->getColoredString('Passed', 'green', 'black', false);
+        }
+        if (empty($headers['vary'])) {
+            $headers['vary'] .= ' ' . $cliHelper->getColoredString('(Empty)', 'red', 'black', false);
+        }
+        if (empty($headers['etag'])) {
+            $headers['etag'] .= ' ' . $cliHelper->getColoredString('(Empty)', 'red', 'black', false);
+        }
+        if (!empty($headers['x-powered-by'])) {
+            $headers['x-powered-by'] .= ' ' . $cliHelper->getColoredString('(is Not Empty)', 'red', 'black', false);
+        }
+        if (!empty($headers['server'])) {
+            $headers['server'] .= ' ' . $cliHelper->getColoredString('(is Not Empty)', 'red', 'black', false);
+        }
+        if (is_null($headers['x-frame-options'])) {
+            $headers['x-frame-options'] .= ' ' . $cliHelper->getColoredString('(Empty - not secure)', 'red', 'black', false);
+        }
+        if (is_null($headers['x-xss-protection'])) {
+            $headers['x-xss-protection'] .= ' ' . $cliHelper->getColoredString('(Empty - not secure)', 'red', 'black', false);
+        }
+
+        return $headers;
+    }
 }
 
 class ErrorReporting
@@ -1618,9 +1835,8 @@ class ErrorReporting
 $cliHelper = new CliHelper();
 
 $cliHelper->printScriptInfo($_VERSION);
-
 // Show Help and Instructions
-if ($cliHelper->isEmptyConfig() || $cliHelper->getConfig('h')) {
+if ($argc === 1 || $cliHelper->getConfig('help')) {
     $cliHelper->setBetweenTextSpace(1);
 
     $cliHelper->printMessage($cliHelper->headerMessage('Help And Instructions'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
@@ -1629,16 +1845,18 @@ if ($cliHelper->isEmptyConfig() || $cliHelper->getConfig('h')) {
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('c', 'laravel check list'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('o', 'optional check list'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('s', 'server check list'));
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('wh', 'webserver headers check list'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('b', 'php benchmark'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('mb', 'mysql benchmark'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('r', 'scan php config and Recommendations'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('up', 'self update'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('v', 'version'));
-    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('h', 'help'));
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('help', 'help'));
 
     $cliHelper->printMessage($cliHelper->headerMessage('Usage Example'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -l 10.x -c -o -s -i -r');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -s -i -r');
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -wh "https://google.com"');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -b -mb');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' up');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -v');
@@ -1811,5 +2029,33 @@ if ($cliHelper->getConfig('r', false)) {
 
             // break;
         }
+    }
+}
+
+if ($cliHelper->getConfigWithArgv($argv, '-wh', false, null)) {
+
+    $url = $cliHelper->getConfigWithArgv($argv, '-wh', true, null);
+    $cliHelper->printMessage($cliHelper->headerMessage('Checking webserver headers ...'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
+
+    $webserver_responses = (new ServerCheck())->checkWebserverHeaders($url);
+    if ($webserver_responses['success'] === false) {
+        $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $webserver_responses['message'], ['fg_color' => 'red', 'bg_color' => 'black']);
+        exit();
+    }
+
+    $webserver_responses['headers'] = (new Recommendations())->getHeadersRecommendations($cliHelper, $webserver_responses['headers']);
+
+
+    $webserver_headers = $webserver_responses['headers'];
+
+
+    if ($webserver_headers) {
+        $cliHelper->printArrayMessage($webserver_headers);
+    }
+
+    if (!empty($webserver_responses['cors'])) {
+        $cliHelper->printMessage($cliHelper->headerMessage('Checking CORS webserver headers ...'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
+
+        $cliHelper->printArrayMessage($webserver_responses['cors']);
     }
 }
