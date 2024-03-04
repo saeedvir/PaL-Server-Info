@@ -6,7 +6,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.3 (Last Update : 2024-03-04)
+ * @version  1.4 (Last Update : 2024-03-04)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
@@ -21,7 +21,7 @@ if ((new ServerCheck())->getWebServerEnvironment() === 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.3.1'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.4'; //Current Version , Don't change this !!!
 
 $MYSQL_CONFIG = [
     'host' => 'localhost',
