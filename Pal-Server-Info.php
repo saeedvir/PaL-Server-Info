@@ -52,7 +52,7 @@ $optional_list = (new ServerRequirements)->OptionalList();
 $info_cards = (new ServerRequirements)->ServerInfoCards();
 
 if (isset($_GET['Recommendations'])) {
-    $recommendations = (new Recommendations())->getRecommendations();
+    $recommendations = (new Recommendations())->getRecommendations($MYSQL_CONFIG);
 }
 if (isset($_GET['Webserver-headers']) && !empty($_GET['url'])) {
     $webserver_responses = (new ServerCheck())->checkWebserverHeaders($_GET['url']);
@@ -1155,9 +1155,8 @@ class Recommendations
     }
 
 
-    public function getRecommendations()
+    public function getRecommendations($MYSQL_CONFIG)
     {
-        global $MYSQL_CONFIG;
         $checklist  = $this->getCheckList();
 
         $return_recommendations = [];
