@@ -800,9 +800,9 @@ class Helper
     {
         $value = strtolower((string)$value);
         if (in_array($value, ['true', '1', 'yes', 'on', 'ok', 'passed'])) {
-            return true;
-        } elseif (in_array($value, ['false', '0', 'no', 'off', 'nok', 'failed'])) {
-            return false;
+          return true;
+        } elseif (in_array($value, ['false', '0', 'no', 'off', 'nok', 'failed']) || empty($value)) {
+          return false;
         }
         return null;
     }
@@ -1405,7 +1405,7 @@ class Recommendations
                     ];
                 }
             } elseif ($val['type'] === 'boolean') {
-                if ((new Helper)->checkBoolean($ini_data) !== (new Helper)->checkBoolean($val['value'])) {
+                if ((new Helper)->booleanToString($ini_data) !== (new Helper)->booleanToString($val['value'])) {
                     $return_recommendations[] = [
                         'title' => $val['title'],
                         'your_value' => (new Helper)->booleanToString($ini_data),
@@ -1524,7 +1524,6 @@ class Recommendations
         }
         unset($webserver, $webserver_version);
 
-        // file_put_contents('log.txt', var_export($return_recommendations, true));
         return $return_recommendations;
     }
 }
