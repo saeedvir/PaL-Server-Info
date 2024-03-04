@@ -21,7 +21,7 @@ if ((new ServerCheck())->getWebServerEnvironment() === 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.3'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.3.1'; //Current Version , Don't change this !!!
 
 $MYSQL_CONFIG = [
     'host' => 'localhost',
