@@ -33,6 +33,9 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 * Mysql Benchmark
 * CLI mode
 
+### FILES
+* <em>Web UI</em> : <b>Pal-Server-Info.php</b>
+* <em>CLI (command line)</em> : <b>PaL-cli.php</b>
 ### Built With
 
 * Php
