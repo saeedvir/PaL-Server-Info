@@ -1542,9 +1542,8 @@ class Recommendations
     }
 
 
-    public function getRecommendations()
+    public function getRecommendations($MYSQL_CONFIG=[])
     {
-        global $MYSQL_CONFIG;
         $checklist  = $this->getCheckList();
 
         $return_recommendations = [];
@@ -2010,7 +2009,7 @@ if ($cliHelper->getConfig('mb')) {
 if ($cliHelper->getConfig('r', false)) {
     $cliHelper->printMessage($cliHelper->headerMessage('Recommendations ...'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
 
-    $recommendations = (new Recommendations())->getRecommendations();
+    $recommendations = (new Recommendations())->getRecommendations($MYSQL_CONFIG);
 
     if (isset($recommendations)) {
 
