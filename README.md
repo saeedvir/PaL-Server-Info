@@ -15,7 +15,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-1.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/main-1.3.png)
 
 
 Php And Laravel (PaL) Server Info
@@ -24,6 +24,13 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
+### Features
+* Check Laravel Requirements
+* Php Config Information
+* Check Php Config
+* Scan Web Server Headers
+* Php Benchmark
+* Mysql Benchmark
 
 ### Built With
 
@@ -64,6 +71,10 @@ Or
 
 ![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-4.png)
 
+### Web Server Headers Scanner
+
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-7.png)
+
 ### Php And Mysql Benchmark Config
 
 ![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-2.png)
@@ -85,7 +96,7 @@ Or
 Download the "PaL-cli.php" file
 and use :
   ```sh
-  php PaL-cli.php h
+  php PaL-cli.php help
   php PaL-cli.php -i -s -o -r
   ```
 
