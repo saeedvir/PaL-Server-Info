@@ -1043,14 +1043,13 @@ class Helper
         return $response;
     }
 
-    public function checkForUpdate()
+    public function checkForUpdate($version)
     {
-        global $_VERSION;
         $url = 'https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/version';
 
         $response = trim($this->httpGet($url));
 
-        if ($_VERSION !== $response) {
+        if ($version !== $response) {
             return true;
         } else {
             return false;
@@ -1874,7 +1873,7 @@ if ($cliHelper->getConfig('up')) {
 
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'Checking for update ...');
 
-    $check_for_update = (new Helper)->checkForUpdate();
+    $check_for_update = (new Helper)->checkForUpdate($_VERSION);
     if ($check_for_update === true) {
 
         $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'A new version of the program is available.');
