@@ -651,7 +651,7 @@ class Helper
         }
 
         if ($download_as_file) {
-            file_put_contents($download_as_file, $response);
+            file_put_contents(__DIR__.DIRECTORY_SEPARATOR.$download_as_file, $response);
         }
 
         return $response;
@@ -677,7 +677,7 @@ class Helper
 
         $download_content = $this->httpGet($url);
 
-        file_put_contents(basename(__FILE__), $download_content);
+        file_put_contents(__DIR__.DIRECTORY_SEPARATOR.basename(__FILE__), $download_content);
 
         return true;
     }
