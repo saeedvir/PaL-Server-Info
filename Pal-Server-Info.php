@@ -657,14 +657,13 @@ class Helper
         return $response;
     }
 
-    public function checkForUpdate()
+    public function checkForUpdate($version)
     {
-        global $_VERSION;
         $url = 'https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/version';
 
         $response = trim($this->httpGet($url));
 
-        if ($_VERSION !== $response) {
+        if ($version !== $response) {
             return true;
         } else {
             return false;
@@ -1691,7 +1690,7 @@ if (isset($_GET['Download_Update'])) {
             <div id="content-box">
                 <?php
                 if (isset($_GET['Check-For-Update'])) :
-                    $check_for_update = (new Helper)->checkForUpdate();
+                    $check_for_update = (new Helper)->checkForUpdate($_VERSION);
                     if ($check_for_update === true) {
                         $update_message = 'A new version of the program is available.' . '<a class="text-link mx-2" href="?Download_Update">Download Now</a>';
                     } else {
