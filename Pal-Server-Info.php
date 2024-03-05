@@ -6,7 +6,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.4 (Last Update : 2024-03-04)
+ * @version  1.5 (Last Update : 2024-03-05)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
@@ -21,7 +21,7 @@ if ((new ServerCheck())->getWebServerEnvironment() === 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.4'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.5'; //Current Version , Don't change this !!!
 
 $MYSQL_CONFIG = [
     'host' => 'localhost',
@@ -481,7 +481,7 @@ class ServerCheck
             ];
         }
 
-        list($header, $body, $curl_info) = (new ServerCheck())->initCurlRequest('GET', $url, '', ['User-Agent'=>'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36']);
+        list($header, $body, $curl_info) = (new ServerCheck())->initCurlRequest('GET', $url, '', ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36']);
 
         if (empty($header)) {
             return [
@@ -1158,8 +1158,8 @@ class Recommendations
     public function getRecommendations($MYSQL_CONFIG)
     {
         $checklist  = $this->getCheckList();
-
         $return_recommendations = [];
+
         //ini
         foreach ($checklist['ini_settings'] as $k => $val) {
             $ini_data = ini_get($k);
@@ -1652,6 +1652,10 @@ if (isset($_GET['Download_Update'])) {
             border-radius: 5px;
         }
 
+        .recommendations_extentions_loaded {
+            font-size: 1.15rem;
+        }
+
         .code_box {
             background-color: #38383c;
             width: 100%;
@@ -1659,6 +1663,14 @@ if (isset($_GET['Download_Update'])) {
             padding: 2em;
             margin: 8px auto;
             border-radius: 8px;
+        }
+
+        .accordion-button.collapsed>span.plus_icon {
+            visibility: inherit;
+        }
+
+        .accordion-button>span.plus_icon {
+            visibility: hidden;
         }
 
 
@@ -1957,13 +1969,57 @@ if (isset($_GET['Download_Update'])) {
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body bg-secondary">
-                        <?php
 
+                        <div class="accordion accordion-flush" id="accordionPhpLoadedModules">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                                        PHP loaded Modules: <span class="plus_icon px-2 text-primary pulse-animation">(click me)</span>
+                                    </button>
+                                </h2>
+                                <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionPhpLoadedModules">
+                                    <div class="accordion-body">
+                                        <?php
+                                        if (function_exists('get_loaded_extensions')) :
+                                        ?>
+                                            <div class="row recommendations_row">
+                                                <div class="col-12">
+                                                    <ul class="d-inline-block recommendations_extentions_loaded">
+                                                        <?php
+
+                                                        foreach (get_loaded_extensions() as $val) :
+                                                        ?>
+                                                            <li class="badge bg-primary my-2 mx-1 px-2">
+                                                                <span><?php echo $val; ?></span>
+                                                            </li>
+                                                        <?php
+                                                        endforeach;
+
+                                                        ?>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        <?php
+                                        else :
+                                        ?>
+                                            <div class="alert alert-danger">
+                                                <strong>PHP Extensions Not Loaded or Not Supported</strong>
+                                            </div>
+                                        <?php
+                                        endif;
+                                        ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <?php
                         foreach ($recommendations as $k => $val) :
                         ?>
                             <div class="row recommendations_row">
                                 <?php
-
                                 ?>
                                 <div class="col-12 recommendations_content my-3">
                                     <h5><span class="recommendations_title"><?php echo $val['title']; ?></span></h5>
