@@ -27,7 +27,7 @@ if ((new ServerCheck())->getWebServerEnvironment() !== 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.4'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.5'; //Current Version , Don't change this !!!
 
 $MYSQL_CONFIG = [
     'host' => 'localhost',
@@ -2010,9 +2010,18 @@ if ($cliHelper->getConfig('r', false)) {
     $cliHelper->printMessage($cliHelper->headerMessage('Recommendations ...'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
 
     $recommendations = (new Recommendations())->getRecommendations($MYSQL_CONFIG);
+    if (function_exists('get_loaded_extensions')){
+        $cliHelper->printMessage('Loaded extensions : ',['fg_color' => 'yellow', 'bg_color' => 'black'],false);
+        $cliHelper->emptyLine();
+        foreach (get_loaded_extensions() as $val){
+            $cliHelper->printMessage('  '.$val.'  ',['fg_color' => 'green', 'bg_color' => 'black'],false);
+        }
+        $cliHelper->emptyLine();
+    }
 
     if (isset($recommendations)) {
-
+        $cliHelper->printMessage('PHP Configuration Recommendations :',['fg_color' => 'yellow', 'bg_color' => 'black'],true);
+        $cliHelper->emptyLine();
         foreach ($recommendations as $key => $value) {
             $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . '[ ' . $value['title'] . ' ]', ['fg_color' => 'light_blue', 'bg_color' => 'black']);
             $cliHelper->emptyLine();
@@ -2025,8 +2034,6 @@ if ($cliHelper->getConfig('r', false)) {
             $cliHelper->emptyLine();
             $cliHelper->printMessage($cliHelper->getBoxLine('line', [], 50));
             $cliHelper->emptyLine();
-
-            // break;
         }
     }
 }
@@ -2057,4 +2064,5 @@ if ($cliHelper->getConfigWithArgv($argv, '-wh', false, null)) {
 
         $cliHelper->printArrayMessage($webserver_responses['cors']);
     }
+    unset($webserver_responses,$webserver_headers);
 }
