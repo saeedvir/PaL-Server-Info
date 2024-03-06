@@ -44,7 +44,11 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+# Download
 
+[Download Latest Releases](https://github.com/saeedvir/PaL-Server-Info/releases)
+
+<hr>
 
 <!-- GETTING STARTED -->
 ## Getting Started
