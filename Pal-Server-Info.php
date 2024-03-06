@@ -6,7 +6,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.5 (Last Update : 2024-03-05)
+ * @version  1.6 (Last Update : 2024-03-06)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
@@ -21,8 +21,8 @@ if ((new ServerCheck())->getWebServerEnvironment() === 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.5'; //Current Version , Don't change this !!!
-
+$_VERSION = 'v 1.6'; //Current Version , Don't change this !!!
+//Global Variables For Mysql Config
 $MYSQL_CONFIG = [
     'host' => 'localhost',
     'username' => 'USER_NAME_HERE', //ex : root
@@ -30,8 +30,22 @@ $MYSQL_CONFIG = [
     'db' => 'DB_NAME_HERE',         //ex : laravel_db
     'benchmark_insert' => 100,      //ex : 100
 ];
-
+//Global Variables For Alerts
+$_ALERTS = [];
+//Global Variables
 $_SCRIPT_FILE = basename(__FILE__);
+
+//Global Variables For Showing Modals
+$_SHOW_MODAL = '';
+
+//Download Update
+if (isset($_GET['Download_Update'])) {
+    if ((new Helper)->downloadUpdate()) {
+        $page = $_SERVER['PHP_SELF'];
+        $sec = "1";
+        header("Refresh: $sec; url=$page");
+    }
+}
 
 $laravel_version_select = (!empty($_GET['laravel_version'])) ? $_GET['laravel_version'] : '10.x';
 
@@ -50,19 +64,49 @@ $serverinfo_list = (new ServerRequirements)->ServerInfoList();
 $optional_list = (new ServerRequirements)->OptionalList();
 
 $info_cards = (new ServerRequirements)->ServerInfoCards();
-
+//show recommendations modal
 if (isset($_GET['Recommendations'])) {
     $recommendations = (new Recommendations())->getRecommendations($MYSQL_CONFIG);
+    $_SHOW_MODAL = 'RecommendationsModal';
 }
+//webserver headers modal
 if (isset($_GET['Webserver-headers']) && !empty($_GET['url'])) {
     $webserver_responses = (new ServerCheck())->checkWebserverHeaders($_GET['url']);
 
     if ($webserver_responses['success'] === true) {
         $webserver_responses['headers'] = (new Recommendations())->getHeadersRecommendations($webserver_responses['headers']);
     }
+    $_SHOW_MODAL = 'getUrlModal';
+}
+//show php ini editor
+if (isset($_GET['PHP-INI-Editor'])) {
+    $_SHOW_MODAL = 'phpIniEditorModal';
 }
 
+//update php.ini
+if (isset($_POST['Update-php-ini'])) {
+    if (isset($_POST['ini_items'])) {
+        $php_ini_update = (new ServerCheck())->updatePhpIniPath($_POST['php_ini_selected'], 'php', $_POST['ini_items']);
 
+        if ($php_ini_update) {
+            $_ALERTS[] = [
+                'message' => '"' . $php_ini_update . '" updated successfully.',
+                'type' => 'success',
+            ];
+            $_ALERTS[] = [
+                'message' => 'Reload "' . (new ServerCheck())->getWebServerEnvironment() . '" To Load php.ini',
+                'type' => 'warning',
+            ];
+        } else {
+            $_ALERTS[] = [
+                'message' => 'Failed to update "php.ini"',
+                'type' => 'danger',
+            ];
+        }
+
+        unset($php_ini_update);
+    }
+}
 
 //Classes and Functions
 class ServerRequirements
@@ -404,7 +448,7 @@ class ServerCheck
         curl_setopt($ch, CURLOPT_URL, $reqURL);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_VERBOSE, true);
+        // curl_setopt($ch, CURLOPT_VERBOSE, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $reqType);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $reqBody);
@@ -546,6 +590,121 @@ class ServerCheck
 
         ];
     }
+
+    public function getPhpIniPath($ret_arr = false)
+    {
+        $php_ini_file = (function_exists('php_ini_loaded_file')) ? php_ini_loaded_file() : null;
+        if (is_null($php_ini_file) || !file_exists($php_ini_file) || !is_writable($php_ini_file)) {
+            $php_ini_file =  __DIR__ . DIRECTORY_SEPARATOR . 'php.ini';
+        }
+
+        if ($ret_arr) {
+            $php_ini_file = [
+                __DIR__ . DIRECTORY_SEPARATOR . 'php.ini',
+                $php_ini_file,
+            ];
+            $php_ini_file = array_unique($php_ini_file);
+            return $php_ini_file;
+        }
+
+        return $php_ini_file;
+    }
+
+    public function updatePhpIniPath($php_ini_file, $section = 'php', $data = [])
+    {
+        if (in_array($php_ini_file, $this->getPhpIniPath(true)) === false) {
+            return false;
+        }
+
+        if (!file_exists($php_ini_file)) {
+            @file_put_contents($php_ini_file, '');
+        }
+
+        if (!is_writable($php_ini_file) || !is_readable($php_ini_file)) {
+            return false;
+        }
+
+
+        $php_ini_data = file_get_contents($php_ini_file);
+        $php_ini_data = str_ireplace([' =', '  =', '   =', '= ', ' = ', '  = ', '  =  ', '   = ', '   =  ', '   =   '], '=', $php_ini_data);
+        preg_replace(['/(\r\n|\r|\n)+/'], ["\n"], $php_ini_data);
+
+
+        $section = strtoupper($section);
+
+        if (empty($php_ini_data)) {
+            file_put_contents($php_ini_file, '[' . $section . ']' . PHP_EOL);
+            foreach ($data as $k => $v) {
+                file_put_contents($php_ini_file, trim($k) . '=' . trim($v) . PHP_EOL, FILE_APPEND);
+            }
+        } else {
+            //create backup
+            file_put_contents($php_ini_file . '.backup-' . time(), $php_ini_data);
+
+            //read data
+            $php_ini_data_arr = parse_ini_string($php_ini_data, true);
+
+            //update file
+            if (isset($php_ini_data_arr[$section])) {
+                foreach ($data as $k => $v) {
+                    if (isset($php_ini_data_arr[$section][$k])) {
+                        $php_ini_data = str_ireplace(
+                            $k . '=' . $php_ini_data_arr[$section][$k],
+                            trim($k) . '=' . trim($v),
+                            $php_ini_data
+                        );
+                    } else {
+                        $php_ini_data = str_ireplace(
+                            '[' . $section . ']',
+                            '[' . $section . ']' . PHP_EOL . trim($k) . '=' . trim($v) . PHP_EOL,
+                            $php_ini_data
+                        );
+                    }
+                }
+
+                file_put_contents($php_ini_file, $php_ini_data);
+            } else {
+                file_put_contents($php_ini_file, '[' . $section . ']' . PHP_EOL, FILE_APPEND);
+                foreach ($data as $k => $v) {
+                    file_put_contents($php_ini_file, trim($k) . '=' . trim($v) . PHP_EOL, FILE_APPEND);
+                }
+            }
+        }
+
+        // die();
+
+        /*if (empty($php_ini_data) && $section) {
+            $php_ini_data = '[' . $section . ']' . PHP_EOL;
+            file_put_contents($php_ini_file, $php_ini_data);
+        } else {
+            file_put_contents($php_ini_file . '.backup-' . time(), $php_ini_data);
+        }
+
+        $php_ini_data = parse_ini_string($php_ini_data, true);
+        file_put_contents('log.txt',var_export($php_ini_data,true));
+
+        foreach ($data as $k => $v) {
+            if(!isset($php_ini_data[$section])){
+                $php_ini_data[$section]=[];
+            }
+            if(!isset($php_ini_data[$section][$k])){
+                $php_ini_data[$section][$k] = $v;
+            }            
+        }
+        file_put_contents('log2.txt',var_export($php_ini_data,true));die();
+        foreach ($php_ini_data as $section_key => $section_value) {
+
+            // file_put_contents($php_ini_file, '[' . $section_key . ']' . PHP_EOL);
+            file_put_contents('php.ini.log', '[' . $section_key . ']' . PHP_EOL, FILE_APPEND);
+
+            foreach ($section_value as $sub_key => $sub_value) {
+                // file_put_contents($php_ini_file, trim($sub_key) . '=' . trim($sub_value) . PHP_EOL, FILE_APPEND);
+                file_put_contents('php.ini.log', trim($sub_key) . '=' . trim($sub_value) . PHP_EOL, FILE_APPEND);
+            }
+        }*/
+
+        return $php_ini_file;
+    }
 }
 
 class Helper
@@ -651,7 +810,7 @@ class Helper
         }
 
         if ($download_as_file) {
-            file_put_contents(__DIR__.DIRECTORY_SEPARATOR.$download_as_file, $response);
+            file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . $download_as_file, $response);
         }
 
         return $response;
@@ -676,7 +835,7 @@ class Helper
 
         $download_content = $this->httpGet($url);
 
-        file_put_contents(__DIR__.DIRECTORY_SEPARATOR.basename(__FILE__), $download_content);
+        file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . basename(__FILE__), $download_content);
 
         return true;
     }
@@ -1068,7 +1227,7 @@ class Recommendations
     {
     }
 
-    private function getCheckList()
+    public function getCheckList($config_key = null)
     {
         $configPath = 'pal-config.json';
         $configUrl = 'https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/pal-config.json';
@@ -1090,7 +1249,12 @@ class Recommendations
         if (empty($response) || $response === '404: Not Found') {
             die('pal-config.json Error');
         }
-        return json_decode($response, true);
+
+        $response = json_decode($response, true);
+        if ($config_key && isset($response[$config_key])) {
+            return $response[$config_key];
+        }
+        return $response;
     }
 
     private function operatorValue($val1, $oprator, $val2 = null)
@@ -1315,6 +1479,32 @@ class Recommendations
         return $return_recommendations;
     }
 
+    public function getIniToHtml($val, $default = null)
+    {
+        switch ($val) {
+            case 'boolean':
+            case 'string':
+            case 'string_number':
+            default:
+                $template = '<optgroup label="Production">' .
+                    '<option selected value="' . $val['value'] . '">' . $val['value'] . '</option>' .
+                    '</optgroup>' .
+                    '<optgroup label="Development">' .
+                    '<option value="' . $val['dev_value'] . '">' . $val['dev_value'] . '</option>' .
+                    '</optgroup>';
+
+                $default = (new Helper())->checkBoolean($default) ? (new Helper())->booleanToString($default) : $default;
+
+                $template .= '<optgroup label="Default">' .
+                    '<option value="' . $default . '">' . $default . '</option>' .
+                    '</optgroup>';
+
+                break;
+        }
+
+        return $template;
+    }
+
     public function getHeadersRecommendations($headers)
     {
         if ($headers['http-code'] === 200) {
@@ -1434,15 +1624,6 @@ class ErrorReporting
         return $description;
     }
 }
-
-//Download Update
-if (isset($_GET['Download_Update'])) {
-    if ((new Helper)->downloadUpdate()) {
-        $page = $_SERVER['PHP_SELF'];
-        $sec = "1";
-        header("Refresh: $sec; url=$page");
-    }
-}
 ?>
 <!doctype html>
 <html dir="ltr" lang="en">
@@ -1451,8 +1632,8 @@ if (isset($_GET['Download_Update'])) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PaL Server Info - <?php echo $_VERSION; ?></title>
-    <meta name="show_recommendation" content="<?php echo isset($recommendations); ?>">
-    <meta name="show_webserver_headers" content="<?php echo isset($webserver_responses); ?>">
+    <meta name="show_modal" content="<?php echo (isset($_SHOW_MODAL)) ? $_SHOW_MODAL : ''; ?>">
+
     <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAABABAQAAAQAAEAEBAAABAAAQAQEAAAEREBERAREQAQAQEAEBABABABAQAQEAEAEREBABAREQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAL2vAAC9rwAAva8AAIQhAAC1rQAAta0AAIWhAAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA" rel="icon" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1558,6 +1739,36 @@ if (isset($_GET['Download_Update'])) {
             animation: pulse 2s infinite;
             -moz-animation: pulse 2s infinite;
             -webkit-animation: pulse 2s infinite;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .blink-animation {
+            animation: blink 0.8s infinite;
+            -moz-animation: blink 0.8s infinite;
+            -webkit-animation: blink 0.8s infinite;
+            display: inline-block !important;
+        }
+
+        .blink-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 100%;
+            background-color: #32E2A0;
+            margin-right: 4px;
+            display: none;
         }
 
 
@@ -1672,6 +1883,22 @@ if (isset($_GET['Download_Update'])) {
             visibility: hidden;
         }
 
+        .ini-input-group {
+            text-align: center;
+        }
+
+        .ini-input-group-label {
+            margin: 10px auto;
+            display: block;
+            min-width: 190px;
+            width: 100%;
+        }
+
+        .ini_input,
+        .select_ini_input {
+            width: 100%;
+            border-color: #4f728f;
+        }
 
         #footer {
             margin: 24px auto 0;
@@ -1697,11 +1924,21 @@ if (isset($_GET['Download_Update'])) {
                         $update_message = 'You are using the latest version of the program.';
                     }
                 ?>
-                    <div class="col">
+                    <div class="col-12">
                         <div class="alert alert-info my-2"><?php echo $update_message; ?></div>
                     </div>
-                <?php
+                    <?php
                     unset($check_for_update, $update_message);
+                endif;
+
+                if (!empty($_ALERTS)) :
+                    foreach ($_ALERTS as $alert_value) :
+                    ?>
+                        <div class="col-12">
+                            <div class="alert alert-<?php echo $alert_value['type']; ?> my-2"><?php echo $alert_value['message']; ?></div>
+                        </div>
+                <?php
+                    endforeach;
                 endif;
                 ?>
                 <!-- Info Cards -->
@@ -1722,7 +1959,6 @@ if (isset($_GET['Download_Update'])) {
                     <?php
                     endforeach;
                     ?>
-
                 </div>
                 <!-- End Info Cards -->
                 <!-- Benchmark Box -->
@@ -1752,6 +1988,10 @@ if (isset($_GET['Download_Update'])) {
                                             <p class="text-muted">This tool checks PHP settings for performance and security.</p>
 
                                             <a href="?Recommendations&laravel_version=<?php echo $laravel_version_select; ?>" class="btn btn-outline-primary mt-2 mx-2">Scan Now</a>
+
+                                            <a class="btn btn-outline-primary mt-2 mx-2" href="?PHP-INI-Editor&laravel_version=<?php echo $laravel_version_select; ?>">
+                                                PHP INI Editor
+                                            </a>
                                         </div>
                                     </div>
                                     <div class="col-md-6 col-12 mt-2">
@@ -2063,8 +2303,6 @@ if (isset($_GET['Download_Update'])) {
     <?php
     $http_url = (isset($_SERVER['REQUEST_SCHEME'])) ? $_SERVER['REQUEST_SCHEME'] . '://' : 'http://';
     $http_url .= (isset($_SERVER['HTTP_HOST'])) ? $_SERVER['HTTP_HOST'] : '127.0.0.1';
-
-
     ?>
     <div class="modal fade" id="getUrlModal" tabindex="-1" aria-labelledby="getUrlModalLabel" aria-hidden="true">
         <div class="modal-dialog <?php if (isset($webserver_responses)) echo 'modal-dialog-scrollable modal-dialog-centered modal-fullscreen' ?>">
@@ -2171,10 +2409,127 @@ if (isset($_GET['Download_Update'])) {
             </div>
         </div>
     </div>
-
-
     <!--End Webserver Headers Modal -->
+    <!-- PHP INI Editor -->
+    <?php
+    if (isset($_GET['PHP-INI-Editor'])) :
+    ?>
+        <div class="modal fade" id="phpIniEditorModal" tabindex="-1" aria-labelledby="phpIniEditorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-fullscreen">
+                <div class="modal-content text-dark">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="phpIniEditorModalLabel">PHP INI Editor</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body  bg-gray">
+                        <form id="frm_update_php_ini" action="?" method="post" onsubmit="return confirm('Are you sure you want to save/update the file?');">
+                            <div>
+                                <div class="alert alert-warning">
+                                    <strong>Attention:</strong> Changes in this section may cause unknown errors in your service
+                                </div>
+                                <?php
+                                $php_ini_file = (new ServerCheck())->getPhpIniPath(true); ?>
+                                <div class="alert alert-info">
+                                    <strong>Loaded php.ini file is :'<?php echo (new ServerCheck())->getPhpIniPath(false); ?>'</strong>
+                                </div>
 
+                            </div>
+                            <div class="form-group mb-3">
+                                <hr>
+                                <label for="" class="text-danger mb-2">
+                                    <span class="material-symbols-outlined">privacy_tip</span>
+                                    Select PHP.ini File To Save:</label>
+                                <div class="px-5">
+                                    <select name="php_ini_selected" id="" class="form-control select-control">
+                                        <?php
+                                        foreach ($php_ini_file as $val) {
+                                        ?>
+                                            <option value="<?php echo $val; ?>"><?php echo $val; ?></option>
+                                        <?php
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row d-none d-md-flex d-lg-flex d-xl-flex text-center">
+                                <div class="col-md-4 col-auto py-2 text-primary">INI key</div>
+                                <div class="col-md-4 col-auto py-2 text-primary">INI value</div>
+                                <div class="col-md-4 col-auto py-2 text-primary">Recommended Value</div>
+                                <hr>
+                            </div>
+                            <?php
+                            $recommendationsHelper = new Recommendations();
+                            $php_ini_settings = $recommendationsHelper->getCheckList('ini_settings');
+                            foreach ($php_ini_settings as $key => $value) :
+                                $ini_data = @ini_get($key);
+                                if ($key === 'error_reporting') :
+                                    $ini_data = (new ErrorReporting)->getErrorLevel();
+                                endif;
+                            ?>
+                                <div class="card shadow-lg my-4 px-2 py-2">
+                                    <div class="ini-input-group">
+                                        <div class="row">
+                                            <div class="col-md-4 col-12 mb-2 mb-md-0">
+                                                <h6 class="ini-input-group-label">
+                                                    <span class="d-block d-md-none text-primary mb-2">INI key:</span>
+                                                    <div class="ini-input-group-label-key">
+                                                        <span title="changed !" class="blink-box"></span>
+                                                        <strong><?php echo $key; ?></strong>
+                                                    </div>
+
+                                                </h6>
+                                            </div>
+                                            <div class="col-md-4 col-12 mb-2 mb-md-0">
+                                                <span class="d-block d-md-none text-primary mb-2">INI value:</span>
+                                                <?php
+                                                if ($value['type'] === 'boolean') :
+                                                ?>
+                                                    <select data-default-value="<?php echo (new Helper())->booleanToString($ini_data) ?>" id="ini_input_<?php echo $key; ?>" data-is-boolean="true" name="ini_items[<?php echo $key; ?>]" class="form-control select-control select_ini_input ini_input_val">
+                                                        <option value="On" <?php echo ((new Helper())->booleanToString($ini_data) === 'On') ? 'selected' : ''; ?>>On</option>
+                                                        <option value="Off" <?php echo ((new Helper())->booleanToString($ini_data) === 'Off') ? 'selected' : ''; ?>>Off</option>
+                                                    </select>
+                                                <?php
+                                                else :
+                                                ?>
+                                                    <input data-default-value="<?php echo $ini_data; ?>" type="text" name="ini_items[<?php echo $key; ?>]" class="form-control ini_input ini_input_val" id="ini_input_<?php echo $key; ?>" value="<?php echo $ini_data; ?>" data-is-boolean="false">
+                                                <?php
+                                                endif;
+                                                ?>
+                                            </div>
+                                            <div class="col-md-4 col-12 mb-2 mb-md-0">
+                                                <span class="d-block d-md-none text-primary mb-2">Recommended value:</span>
+                                                <select id="" data-target-input="#ini_input_<?php echo $key; ?>" class="form-control select-control select_ini_input">
+                                                    <?php echo $recommendationsHelper->getIniToHtml($value, $ini_data) ?>
+                                                </select>
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php
+                            endforeach;
+                            unset($recommendationsHelper, $php_ini_settings, $ini_data);
+                            ?>
+
+                            <div>
+
+
+                            </div>
+                            <input type="hidden" name="Update-php-ini" value="yes">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="$('#frm_update_php_ini').submit();">Update</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php
+    endif;
+    ?>
+    <!-- END PHP INI Editor -->
 
 
     <!-- Bootstrap Bundle with Popper -->
@@ -2235,7 +2590,6 @@ if (isset($_GET['Download_Update'])) {
                 '(\\?[;&a-z\\d%_.~+=-]*)?' + // validate query string
                 '(\\#[-a-z\\d_]*)?$', 'i'); // validate fragment locator
             return !!urlPattern.test(urlString);
-
         }
 
         // Execute the code when the document is ready
@@ -2260,7 +2614,23 @@ if (isset($_GET['Download_Update'])) {
                     $('#btn_submit_url').removeAttr('disabled');
                     $(this).addClass('is-valid').removeClass('is-invalid');
                 }
-            })
+            });
+
+            $('.ini_input_val').on('keyup change mousedown', function(e) {
+
+                if ($(this).val() != $(this).data('default-value')) {
+                    // console.log('changed !');
+                    $(this).parents('.ini-input-group').first().find('span.blink-box').addClass('blink-animation');
+                } else {
+                    $(this).parents('.ini-input-group').first().find('span.blink-box').removeClass('blink-animation');
+                }
+
+            });
+
+            $('.select_ini_input').on('change', function() {
+                let target_input = $(this).data('target-input');
+                $(target_input).val($(this).val()).change();
+            });
 
             // Execute code after a timeout of 2 seconds
             setTimeout(function() {
@@ -2285,20 +2655,17 @@ if (isset($_GET['Download_Update'])) {
             // Update the browser history state
             history.replaceState({}, '<?php echo $_SCRIPT_FILE; ?>', '/<?php echo $_SCRIPT_FILE; ?>');
 
-            //Check for Show Modal
-            if ($('meta[name="show_recommendation"]').attr('content') == '1') {
-                let myModal = new bootstrap.Modal(document.getElementById('RecommendationsModal'))
-                myModal.show();
-                myModal = null;
-            }
-            if ($('meta[name="show_webserver_headers"]').attr('content') == '1') {
-                let myModal = new bootstrap.Modal(document.getElementById('getUrlModal'))
-                myModal.show();
-                myModal = null;
+            //Check for Show Modals
+            if ($('meta[name="show_modal"]').length > 0) {
+                let modal_id = $('meta[name="show_modal"]').attr('content');
+                if (modal_id && modal_id.length > 0) {
+                    let myModal = new bootstrap.Modal(document.getElementById(modal_id))
+                    myModal.show();
+                    myModal = null;
+                }
             }
 
-
-
+            //show log
             console.log('The program was successfully executed.');
         });
     </script>
