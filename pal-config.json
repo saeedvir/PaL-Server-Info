@@ -127,8 +127,8 @@
             "how_to_fix": "Edit php.ini"
         },
         "error_log": {
-            "value": "",
-            "dev_value": "",
+            "value": "error_log",
+            "dev_value": "error_log",
             "operation": "not_empty",
             "title": "error_log",
             "tag": "errors",
