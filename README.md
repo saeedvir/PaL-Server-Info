@@ -15,7 +15,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/main-1.3.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-1.png)
 
 
 Php And Laravel (PaL) Server Info
@@ -31,6 +31,7 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 * Scan Web Server Headers
 * Php Benchmark
 * Mysql Benchmark
+* PHP INI Editor (in web ui only)
 * CLI mode
 
 ### FILES
@@ -77,16 +78,20 @@ Or
 
 ### Php Scan Configuration
 
-![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-4.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-4.png)
+
+### Php INI Editor
+
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-8.png)
 
 ### Web Server Headers Scanner
 
-![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-7.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-7.png)
 
 ### Php And Mysql Benchmark Config
 
-![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-2.png)
-![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-3.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-2.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-3.png)
 
 1. Don't forget to enter the mysql username and password in 'Pal-Server-Info.php' on line 22
    ```php
@@ -108,8 +113,8 @@ and use :
   php PaL-cli.php -i -s -o -r
   ```
 
-![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-5.png)
-![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/image-6.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-5.png)
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-6.png)
 
 ## How To Customize PHP Configuration Scan
 Download the "pal-config.json" file
