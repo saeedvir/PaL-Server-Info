@@ -6,7 +6,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.5 (Last Update : 2024-03-05)
+ * @version  1.6 (Last Update : 2024-03-06)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
@@ -27,7 +27,7 @@ if ((new ServerCheck())->getWebServerEnvironment() !== 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.5'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.6'; //Current Version , Don't change this !!!
 
 $MYSQL_CONFIG = [
     'host' => 'localhost',
@@ -1541,7 +1541,7 @@ class Recommendations
     }
 
 
-    public function getRecommendations($MYSQL_CONFIG=[])
+    public function getRecommendations($MYSQL_CONFIG)
     {
         $checklist  = $this->getCheckList();
 
