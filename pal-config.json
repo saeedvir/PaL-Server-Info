@@ -132,7 +132,7 @@
             "operation": "not_empty",
             "title": "error_log",
             "tag": "errors",
-            "type": "boolean",
+            "type": "string",
             "how_to_fix": "Edit php.ini"
         },
         "short_open_tag": {
