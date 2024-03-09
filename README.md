@@ -27,6 +27,12 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 <h4>
   <a href="https://vrgl.ir/dykF4">راهنمای فارسی معرفی و نصب اسکریپت PaL را اینجا بخوانید</a>
 </h4>
+
+<img src="https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/donate-fa.jpg" width="100%">
+
+<h4>
+<a href="https://reymit.ir/saeedvir">برای حمایت مالی پروژه PaL اینجا کلیک کنید</a>
+</h4>
 <br>
 
 <hr>
