@@ -23,6 +23,13 @@ Also this tool performs a benchmark test on MySQL database and PHP server.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+<hr><br>
+<h4>
+  <a href="https://vrgl.ir/dykF4">راهنمای فارسی معرفی و نصب اسکریپت PaL را اینجا بخوانید</a>
+</h4>
+<br>
+
+<hr>
 
 ### Features
 * Check Laravel Requirements
