@@ -106,7 +106,11 @@ Or
 ![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-2.png)
 ![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-3.png)
 
-1. Don't forget to enter the mysql username and password in 'Pal-Server-Info.php' on line 22
+### MySQL Config
+1. Don't forget to enter the mysql username and password
+![Alt text](https://raw.githubusercontent.com/saeedvir/PaL-Server-Info/main/img/image-9.png)
+
+or in 'Pal-Server-Info.php' on line 27
    ```php
       $MYSQL_CONFIG = [
         'host' => 'localhost',
@@ -116,7 +120,7 @@ Or
         'benchmark_insert' => 100,      //ex : 100
       ];
    ```
-2. Refresh Your Browser
+3. Refresh Your Browser
 
 ## How To Use CLI Mode?
 Download the "PaL-cli.php" file
