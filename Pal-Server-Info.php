@@ -6,12 +6,13 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.6 (Last Update : 2024-03-06)
+ * @version  1.7 (Last Update : 2024-03-09)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
  * @copyright 2024
  */
+session_start();
 if (version_compare(PHP_VERSION, '5.6') < 0) {
     echo 'This script requires PHP 5.6 or higher.';
     exit(1);
@@ -21,15 +22,16 @@ if ((new ServerCheck())->getWebServerEnvironment() === 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.6'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.7'; //Current Version , Don't change this !!!
 //Global Variables For Mysql Config
-$MYSQL_CONFIG = [
+$MYSQL_CONFIG = (new Helper)->getSessions('mysql_config', [
     'host' => 'localhost',
     'username' => 'USER_NAME_HERE', //ex : root
     'password' => 'PASSWORD_HERE', //ex : password
     'db' => 'DB_NAME_HERE',         //ex : laravel_db
     'benchmark_insert' => 100,      //ex : 100
-];
+]);
+
 //Global Variables For Alerts
 $_ALERTS = [];
 //Global Variables
@@ -41,13 +43,11 @@ $_SHOW_MODAL = '';
 //Download Update
 if (isset($_GET['Download_Update'])) {
     if ((new Helper)->downloadUpdate()) {
-        $page = $_SERVER['PHP_SELF'];
-        $sec = "1";
-        header("Refresh: $sec; url=$page");
+        (new Helper)->reloadPage();
     }
 }
 
-$laravel_version_select = (!empty($_GET['laravel_version'])) ? $_GET['laravel_version'] : '10.x';
+$laravel_version_select = (!empty($_GET['laravel_version'])) ? $_GET['laravel_version'] : '11.x';
 
 $check_list = (new ServerRequirements)->LaravelRequirementsList($laravel_version_select);
 $check_list['Mysql Version'] = @(new ServerCheck($MYSQL_CONFIG))->GetMysqlVersion();
@@ -108,26 +108,38 @@ if (isset($_POST['Update-php-ini'])) {
     }
 }
 
+if (isset($_POST['Set-mysql-config'])) {
+    (new Helper)->setSessions('mysql_config', [
+        'host' => (isset($_POST['mysql_config_host'])) ? $_POST['mysql_config_host'] : 'localhost',
+        'username' => (isset($_POST['mysql_config_username'])) ? $_POST['mysql_config_username'] : 'USER_NAME_HERE',
+        'password' => (isset($_POST['mysql_config_password'])) ? $_POST['mysql_config_password'] : 'PASSWORD_HERE',
+        'db' => (isset($_POST['mysql_config_db'])) ? $_POST['mysql_config_db'] : 'DB_NAME_HERE',
+        'benchmark_insert' => (isset($_POST['mysql_config_benchmark_insert'])) ? (int)$_POST['mysql_config_benchmark_insert'] : 100,
+    ]);
+
+    (new Helper)->reloadPage();
+}
+
 //Classes and Functions
 class ServerRequirements
 {
 
     private $laravel_version;
-    public function __construct($laravel_version = '10.x')
+    public function __construct($laravel_version = '11.x')
     {
 
         $this->laravel_version = $this->setLaravelVersion($laravel_version);
     }
 
-    public function setLaravelVersion($laravel_version = '10.x')
+    public function setLaravelVersion($laravel_version = '11.x')
     {
         $laravel_version = (string)$laravel_version;
 
-        $laravel_versions = ['10.x', '9.x', '8.x', '7.x', '6.x', '5.8'];
+        $laravel_versions = ['11.x', '10.x', '9.x', '8.x', '7.x', '6.x', '5.8'];
         if (in_array($laravel_version, $laravel_versions) !== false) {
             $this->laravel_version = $laravel_version;
         } else {
-            $this->laravel_version = '10.x';
+            $this->laravel_version = '11.x';
         }
 
         return $this->laravel_version;
@@ -208,9 +220,25 @@ class ServerRequirements
             // 'Memory Usage' => (new Helper)->formatBytes(memory_get_usage(false)) . ' / ' . (new Helper)->formatBytes(memory_get_peak_usage(true)),
         ];
     }
-    public function LaravelRequirementsList($laravel_version = '10.x')
+    public function LaravelRequirementsList($laravel_version = '11.x')
     {
         $laravel_requirements = [
+            '11.x' => [
+                'php version >= 8.2' => (version_compare(phpversion(), '8.2', '>=')),
+                'Ctype PHP Extension' => extension_loaded('ctype'),
+                'cURL PHP Extension' => extension_loaded('curl'),
+                'dom PHP Extension' => extension_loaded('dom'),
+                'Fileinfo PHP Extension' => extension_loaded('fileinfo'),
+                'Filter PHP Extension' => extension_loaded('filter'),
+                'Hash PHP Extension' => extension_loaded('hash'),
+                'Mbstring PHP Extension' => extension_loaded('mbstring'),
+                'OpenSSL PHP Extension' => extension_loaded('openssl'),
+                'PCRE PHP Extension' => extension_loaded('pcre'),
+                'PDO PHP Extension' => extension_loaded('pdo'),
+                'Session PHP Extension' => extension_loaded('session'),
+                'Tokenizer PHP Extension' => extension_loaded('tokenizer'),
+                'XML PHP Extension' => extension_loaded('xml'),
+            ],
             '10.x' => [
                 'php version >= 8.1' => (version_compare(phpversion(), '8.1', '>=')),
                 'Ctype PHP Extension' => extension_loaded('ctype'),
@@ -301,7 +329,7 @@ class ServerRequirements
         $laravel_version = $this->setLaravelVersion($laravel_version);
 
         if (!isset($laravel_requirements[$laravel_version])) {
-            $laravel_requirements['10.x'];
+            $laravel_requirements['11.x'];
         }
 
         $laravel_requirements[$laravel_version]['Mysqli or PDO'] = (class_exists('mysqli') === true || class_exists('PDO') === true) ? true : false;
@@ -414,7 +442,7 @@ class ServerCheck
 
             return $version;
         } catch (Exception $e) {
-            return 'Error - Check Mysql Config on line 26';
+            return 'Error - Enter / Update Your MySQL Config <a class="text-link" data-bs-toggle="modal" data-bs-target="#setMysqlConfigModal">Set Mysql Config</a>';
         }
     }
 
@@ -670,45 +698,63 @@ class ServerCheck
                 }
             }
         }
-
-        // die();
-
-        /*if (empty($php_ini_data) && $section) {
-            $php_ini_data = '[' . $section . ']' . PHP_EOL;
-            file_put_contents($php_ini_file, $php_ini_data);
-        } else {
-            file_put_contents($php_ini_file . '.backup-' . time(), $php_ini_data);
-        }
-
-        $php_ini_data = parse_ini_string($php_ini_data, true);
-        file_put_contents('log.txt',var_export($php_ini_data,true));
-
-        foreach ($data as $k => $v) {
-            if(!isset($php_ini_data[$section])){
-                $php_ini_data[$section]=[];
-            }
-            if(!isset($php_ini_data[$section][$k])){
-                $php_ini_data[$section][$k] = $v;
-            }            
-        }
-        file_put_contents('log2.txt',var_export($php_ini_data,true));die();
-        foreach ($php_ini_data as $section_key => $section_value) {
-
-            // file_put_contents($php_ini_file, '[' . $section_key . ']' . PHP_EOL);
-            file_put_contents('php.ini.log', '[' . $section_key . ']' . PHP_EOL, FILE_APPEND);
-
-            foreach ($section_value as $sub_key => $sub_value) {
-                // file_put_contents($php_ini_file, trim($sub_key) . '=' . trim($sub_value) . PHP_EOL, FILE_APPEND);
-                file_put_contents('php.ini.log', trim($sub_key) . '=' . trim($sub_value) . PHP_EOL, FILE_APPEND);
-            }
-        }*/
-
         return $php_ini_file;
     }
 }
 
 class Helper
 {
+    // (new Helper())->dd($var1,$var2,....);
+    public function dd()
+    {
+        $args = func_get_args();
+        foreach ($args as $var) {
+            echo '<code style="font-family: monospace;font-size: 13px;background-color: #333;padding: 8px 12px;display: block;width: 100%;box-sizing: border-box;border-radius: 12px;word-wrap: break-word;text-align: left;direction: ltr;margin: 12px 0"><pre style="
+            background-color: #FEFEFE;padding: 8px;border-radius: 8px;line-height: 1.2rem;font-weight: 600;">';
+
+            if (is_array($var) || is_object($var)) {
+                echo htmlentities(print_r($var, true));
+            } elseif (is_string($var)) {
+                echo "string(" . strlen($var) . ") \"" . htmlentities($var) . "\"\n";
+            } else {
+                var_dump($var);
+            }
+
+            echo "\n</pre></code>";
+        }
+
+
+        exit();
+        die();
+    }
+
+    public function reloadPage()
+    {
+        $page = $_SERVER['PHP_SELF'];
+        $sec = "1";
+        header("Refresh: $sec; url=$page");
+        exit();
+    }
+    public function getSessions($session_key = null, $default = null)
+    {
+        if (isset($_SESSION['PaL'])) {
+            if ($session_key) {
+                if (isset($_SESSION['PaL'][$session_key])) {
+                    return $_SESSION['PaL'][$session_key];
+                }
+                return $default;
+            }
+            return $_SESSION['PaL'];
+        } else {
+            return $default;
+        }
+    }
+    public function setSessions($session_key, $session_value)
+    {
+        $_SESSION['PaL'][$session_key] = $session_value;
+
+        return $session_value;
+    }
     /**
      * Format a given number of bytes into a human-readable format.
      *
@@ -1973,7 +2019,12 @@ class ErrorReporting
                             <div class="accordion-body">
                                 <p class="text-muted">
                                     <span class="material-symbols-outlined text-warning pulse-animation">privacy_tip</span>
-                                    Don't forget to enter the mysql username and password in '<?php echo basename($_SERVER["SCRIPT_FILENAME"]); ?>' on line 26
+                                    Don't forget to enter the mysql username and password.
+                                    <button type="button" class="btn btn-outline-primary mx-2" data-bs-toggle="modal" data-bs-target="#setMysqlConfigModal">
+                                        Set Mysql Config
+                                    </button>
+                                    <br>
+
                                 </p>
                                 <h5>PHP And Mysql Benchmark</h5>
                                 <p class="text-muted">This tool performs a benchmark test on MySQL database and PHP server.</p>
@@ -2119,7 +2170,7 @@ class ErrorReporting
                         unset($benchmark_results);
                     else :
                     ?>
-                        <div class="alert alert-warning">Error in Mysql Connection - Check Mysql Config on line 26</div>
+                        <div class="alert alert-warning">Error in Mysql Connection - Enter / Update Your MySQL Config <a class="text-link" data-bs-toggle="modal" data-bs-target="#setMysqlConfigModal">Set Mysql Config</a></div>
                         <!-- End Mysql Benchmark Box -->
                 <?php
                     endif;
@@ -2136,6 +2187,7 @@ class ErrorReporting
                                         Laravel <?php echo $laravel_version_select; ?> Requirements
                                     </button>
                                     <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="?laravel_version=11.x">11.x</a></li>
                                         <li><a class="dropdown-item" href="?laravel_version=10.x">10.x</a></li>
                                         <li><a class="dropdown-item" href="?laravel_version=9.x">9.x</a></li>
                                         <li><a class="dropdown-item" href="?laravel_version=8.x">8.x</a></li>
@@ -2323,7 +2375,7 @@ class ErrorReporting
                                 <input type="hidden" name="laravel_version" value="<?php echo $laravel_version_select; ?>">
                             </div>
                             <div>
-                                <button id="btn_submit_url" type="submit" class="btn btn-primary">Check Headers</button>
+                                <button id="btn_submit_url" type="submit" class="btn btn-success">Check Headers</button>
 
                             </div>
                         </form>
@@ -2520,7 +2572,7 @@ class ErrorReporting
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" onclick="$('#frm_update_php_ini').submit();">Update</button>
+                        <button type="button" class="btn btn-success" onclick="$('#frm_update_php_ini').submit();">Update</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
@@ -2530,6 +2582,58 @@ class ErrorReporting
     endif;
     ?>
     <!-- END PHP INI Editor -->
+
+    <!-- Set Mysql Config Modal -->
+    <div class="modal fade" id="setMysqlConfigModal" tabindex="-1" aria-labelledby="setMysqlConfigModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-dark">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="setMysqlConfigModalLabel">Mysql Config</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="" method="post" enctype="multipart/form-data" onsubmit="return confirm('Are you sure you want to save/update the your mysql config?');">
+                        <div class="mb-3">
+                            <div class="alert alert-danger">
+                                Do not forget to delete the '.pal-env' file after use
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-group">
+                                <label for="host-name-input" class="col-form-label">Enter Host:</label>
+                                <input type="text" name="mysql_config_host" required class="form-control" id="host-name-input" placeholder="localhost" value="<?php echo $MYSQL_CONFIG['host']; ?>">
+                            </div>
+                            <div class="form-group">
+                                <label for="username-input" class="col-form-label">Enter Username:</label>
+                                <input type="text" name="mysql_config_username" required class="form-control" id="username-input" placeholder="USER_NAME_HERE" value="">
+                            </div>
+                            <div class="form-group">
+                                <label for="password-input" class="col-form-label">Enter Password:</label>
+                                <input type="text" name="mysql_config_password" class="form-control" id="password-input" placeholder="PASSWORD_HERE" value="">
+                            </div>
+                            <div class="form-group">
+                                <label for="db-name-input" class="col-form-label">Enter DB Name:</label>
+                                <input type="text" name="mysql_config_db" required class="form-control" id="db-name-input" placeholder="DB_NAME_HERE" value="">
+                            </div>
+                            <div class="form-group">
+                                <label for="benchmark-insert-input" class="col-form-label">Enter DB Name:</label>
+                                <input type="text" name="mysql_config_benchmark_insert" required class="form-control" id="benchmark-insert-input" placeholder="100" value="<?php echo $MYSQL_CONFIG['benchmark_insert']; ?>">
+                            </div>
+                            <input type="hidden" name="Set-mysql-config">
+                            <input type="hidden" name="laravel_version" value="<?php echo $laravel_version_select; ?>">
+                        </div>
+                        <div>
+                            <button id="btn_submit_url" type="submit" class="btn btn-success">Update Config</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Set Mysql Config Modal -->
 
 
     <!-- Bootstrap Bundle with Popper -->
