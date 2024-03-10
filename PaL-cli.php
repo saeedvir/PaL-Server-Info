@@ -6,7 +6,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.6 (Last Update : 2024-03-06)
+ * @version  1.7 (Last Update : 2024-03-09)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
@@ -14,7 +14,7 @@
  */
 /**
  * Usage
- * php PaL-cli.php -l 10.x -i -c -o -s -r
+ * php PaL-cli.php -l 11.x -i -c -o -s -r
  * php PaL-cli.php -wh "https://www.example.com"
  * php PaL-cli.php help
  */
@@ -27,16 +27,17 @@ if ((new ServerCheck())->getWebServerEnvironment() !== 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.6'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.7'; //Current Version , Don't change this !!!
+//Init Config Var from '.pal-env'
+$_CONFIG = (new Helper)->getConfigFileData(null, []);
 
 $MYSQL_CONFIG = [
-    'host' => 'localhost',
-    'username' => 'USER_NAME_HERE', //ex : root
-    'password' => 'PASSWORD_HERE', //ex : password
-    'db' => 'DB_NAME_HERE',         //ex : laravel_db
-    'benchmark_insert' => 100,      //ex : 100
+    'host' => (isset($_CONFIG['HOST'])) ? $_CONFIG['HOST'] : 'localhost',
+    'username' => (isset($_CONFIG['USERNAME'])) ? $_CONFIG['USERNAME'] : 'USER_NAME_HERE', //ex : root
+    'password' => (isset($_CONFIG['PASSWORD'])) ? $_CONFIG['PASSWORD'] : 'PASSWORD_HERE', //ex : password
+    'db' => (isset($_CONFIG['DB'])) ? $_CONFIG['DB'] : 'DB_NAME_HERE',         //ex : laravel_db
+    'benchmark_insert' => (isset($_CONFIG['BENCHMARK_INSERT'])) ? $_CONFIG['BENCHMARK_INSERT'] : 100,      //ex : 100
 ];
-
 
 //Classes and Functions
 class CliHelper
@@ -450,21 +451,21 @@ class ServerRequirements
 {
 
     private $laravel_version;
-    public function __construct($laravel_version = '10.x')
+    public function __construct($laravel_version = '11.x')
     {
 
         $this->laravel_version = $this->setLaravelVersion($laravel_version);
     }
 
-    public function setLaravelVersion($laravel_version = '10.x')
+    public function setLaravelVersion($laravel_version = '11.x')
     {
         $laravel_version = (string)$laravel_version;
 
-        $laravel_versions = ['10.x', '9.x', '8.x', '7.x', '6.x', '5.8'];
+        $laravel_versions = ['11.x', '10.x', '9.x', '8.x', '7.x', '6.x', '5.8'];
         if (in_array($laravel_version, $laravel_versions) !== false) {
             $this->laravel_version = $laravel_version;
         } else {
-            $this->laravel_version = '10.x';
+            $this->laravel_version = '11.x';
         }
 
         return $this->laravel_version;
@@ -551,9 +552,25 @@ class ServerRequirements
             // 'Memory Usage' => (new Helper)->formatBytes(memory_get_usage(false)) . ' / ' . (new Helper)->formatBytes(memory_get_peak_usage(true)),
         ];
     }
-    public function LaravelRequirementsList($laravel_version = '10.x')
+    public function LaravelRequirementsList($laravel_version = '11.x')
     {
         $laravel_requirements = [
+            '11.x' => [
+                'php version >= 8.2' => (version_compare(phpversion(), '8.2', '>=')),
+                'Ctype PHP Extension' => extension_loaded('ctype'),
+                'cURL PHP Extension' => extension_loaded('curl'),
+                'dom PHP Extension' => extension_loaded('dom'),
+                'Fileinfo PHP Extension' => extension_loaded('fileinfo'),
+                'Filter PHP Extension' => extension_loaded('filter'),
+                'Hash PHP Extension' => extension_loaded('hash'),
+                'Mbstring PHP Extension' => extension_loaded('mbstring'),
+                'OpenSSL PHP Extension' => extension_loaded('openssl'),
+                'PCRE PHP Extension' => extension_loaded('pcre'),
+                'PDO PHP Extension' => extension_loaded('pdo'),
+                'Session PHP Extension' => extension_loaded('session'),
+                'Tokenizer PHP Extension' => extension_loaded('tokenizer'),
+                'XML PHP Extension' => extension_loaded('xml'),
+            ],
             '10.x' => [
                 'php version >= 8.1' => (version_compare(phpversion(), '8.1', '>=')),
                 'Ctype PHP Extension' => extension_loaded('ctype'),
@@ -644,7 +661,7 @@ class ServerRequirements
         $laravel_version = $this->setLaravelVersion($laravel_version);
 
         if (!isset($laravel_requirements[$laravel_version])) {
-            $laravel_requirements['10.x'];
+            $laravel_requirements['11.x'];
         }
 
         $laravel_requirements[$laravel_version]['Mysqli or PDO'] = (class_exists('mysqli') === true || class_exists('PDO') === true) ? true : false;
@@ -757,7 +774,7 @@ class ServerCheck
 
             return $version;
         } catch (Exception $e) {
-            return 'Error - Check Mysql Config on line 32';
+            return 'Error - Check Mysql Config';
         }
     }
 
@@ -936,6 +953,45 @@ class ServerCheck
 
 class Helper
 {
+    public function getConfigFileData($config_key, $default = null, $env_file = __DIR__ . DIRECTORY_SEPARATOR . '.pal-env')
+    {
+        if (file_exists($env_file)) {
+            $config_file_data = file_get_contents($env_file);
+            if (!empty($config_file_data)) {
+                $config_file_data = parse_ini_string($config_file_data);
+                if (is_array($config_file_data)) {
+                    if ($config_key && isset($config_file_data[$config_key])) {
+                        return $config_file_data[$config_key];
+                    }
+                    return $config_file_data;
+                }
+                return $default;
+            }
+            return $default;
+        } else {
+            return $default;
+        }
+    }
+    public function setConfigFileData($config_key_value = [], $env_file = __DIR__ . DIRECTORY_SEPARATOR . '.pal-env')
+    {
+        if (is_array($config_key_value) && count($config_key_value) > 0) {
+
+            $config_file_data = $this->getConfigFileData(null, []);
+
+            foreach ($config_key_value as $k => $v) {
+                $config_file_data[strtoupper($k)] = $v;
+            }
+
+            file_put_contents($env_file, '');
+            foreach ($config_file_data as $k => $v) {
+                file_put_contents($env_file, $k . '=' . $v . PHP_EOL, FILE_APPEND);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
     /**
      * Format a given number of bytes into a human-readable format.
      *
@@ -1037,7 +1093,7 @@ class Helper
         }
 
         if ($download_as_file) {
-            file_put_contents(__DIR__.DIRECTORY_SEPARATOR.$download_as_file, $response);
+            file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . $download_as_file, $response);
         }
 
         return $response;
@@ -1062,7 +1118,7 @@ class Helper
 
         $download_content = $this->httpGet($url);
 
-        file_put_contents(__DIR__.DIRECTORY_SEPARATOR.basename(__FILE__), $download_content);
+        file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . basename(__FILE__), $download_content);
 
         return true;
     }
@@ -1548,8 +1604,8 @@ class Recommendations
         $return_recommendations = [];
         //ini
         foreach ($checklist['ini_settings'] as $k => $val) {
-            if((new ServerCheck())->getWebServerEnvironment() === 'CLI'){
-                if(in_array($k,['max_execution_time','max_input_time'])){
+            if ((new ServerCheck())->getWebServerEnvironment() === 'CLI') {
+                if (in_array($k, ['max_execution_time', 'max_input_time'])) {
                     continue;
                 }
             }
@@ -1839,7 +1895,7 @@ if ($argc === 1 || $cliHelper->getConfig('help')) {
 
     $cliHelper->printMessage($cliHelper->headerMessage('Help And Instructions'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('i', 'show informations'));
-    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('-l', 'set laravel version for check list for ex: 10.x or 9.x or 8.x or 7.x or 6.x or 5.8'));
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('-l', 'set laravel version for check list for ex: 11.x or 10.x or 9.x or 8.x or 7.x or 6.x or 5.8'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('c', 'laravel check list'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('o', 'optional check list'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('s', 'server check list'));
@@ -1848,15 +1904,17 @@ if ($argc === 1 || $cliHelper->getConfig('help')) {
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('mb', 'mysql benchmark'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('r', 'scan php config and Recommendations'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('up', 'self update'));
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('mysqlconfig', 'set mysql config'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('v', 'version'));
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . $cliHelper->getLineBetween('help', 'help'));
 
     $cliHelper->printMessage($cliHelper->headerMessage('Usage Example'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
-    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -l 10.x -c -o -s -i -r');
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -l 11.x -c -o -s -i -r');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -s -i -r');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -wh "https://google.com"');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -b -mb');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' up');
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -mysqlconfig host=localhost;;username=root;;password=pass;;db=db_name;;benchmark_insert=100');
     $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -v');
 
 
@@ -1864,6 +1922,31 @@ if ($argc === 1 || $cliHelper->getConfig('help')) {
 }
 //Show Version
 if ($cliHelper->getConfig('v')) {
+    exit();
+}
+//Set Mysql Config To Env FIle
+if ($cliHelper->getConfigWithArgv($argv, '-mysqlconfig', false, null)) {
+
+    $mysql_config_input = $cliHelper->getConfigWithArgv($argv, '-mysqlconfig', true, []);
+    if (!empty($mysql_config_input)) {
+        $mysql_config_input = explode(';;', $mysql_config_input);
+        if (count($mysql_config_input) > 0) {
+            $mysql_config_arr = [];
+            foreach ($mysql_config_input as $v) {
+                $v_config = explode('=', $v);
+                if (isset($v_config[0]) && isset($v_config[1])) {
+                    $mysql_config_arr[$v_config[0]] = $v_config[1];
+                }
+            }
+            if ((new Helper)->setConfigFileData($mysql_config_arr)) {
+                $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'MySql Config Updated successfully.');
+            }
+        } else {
+            $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'MySql Config Error.see example:');
+        }
+    } else {
+        $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'MySql Config Update Error.see example');
+    }
     exit();
 }
 
@@ -1893,14 +1976,17 @@ if ($cliHelper->getConfig('up')) {
 
 // Check for mysql config
 if ($MYSQL_CONFIG['username'] == 'USER_NAME_HERE' || $MYSQL_CONFIG['password'] == 'PASSWORD_HERE' || $MYSQL_CONFIG['db'] == 'DB_NAME_HERE') {
-    $cliHelper->boxedMessage('Don`t forget to enter the mysql username and password in ' . basename($_SERVER["SCRIPT_FILENAME"]) . ' on line 32', ['fg_color' => 'yellow', 'bg_color' => 'black']);
+    $cliHelper->boxedMessage('Don`t forget to enter the mysql username and password', ['fg_color' => 'yellow', 'bg_color' => 'black']);
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'see example:');
+    $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -mysqlconfig host=localhost;;username=root;;password=pass;;db=db_name;;benchmark_insert=100');
+
     $cliHelper->emptyLine();
 }
 
 //Set Laravel Version
-if ($cliHelper->getConfig('l', '10.x')) {
+if ($cliHelper->getConfig('l', '11.x')) {
     //Check Laravel Version
-    $laravel_version_select = (new ServerRequirements)->setLaravelVersion($cliHelper->getConfig('l', '10.x'));
+    $laravel_version_select = (new ServerRequirements)->setLaravelVersion($cliHelper->getConfig('l', '11.x'));
 
     // $cliHelper->printMessage('Laravel '.$laravel_version_select.' version is selected');
 }
@@ -1999,7 +2085,11 @@ if ($cliHelper->getConfig('mb')) {
 
         $cliHelper->unsetBetweenTextSpace();
     } else {
-        $cliHelper->printMessage('Error in Mysql Connection - Check Mysql Config on line 32', ['fg_color' => 'red', 'bg_color' => 'black']);
+        $cliHelper->printMessage('Error in Mysql Connection - Check Mysql Config', ['fg_color' => 'red', 'bg_color' => 'black']);
+        $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'see example:');
+        $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . 'php ' . $cliHelper->getFilename() . ' -mysqlconfig host=localhost;;username=root;;password=pass;;db=db_name;;benchmark_insert=100');
+
+
         $cliHelper->printMessage('Mysql Benchmark Failed. Please try again.', ['fg_color' => 'red', 'bg_color' => 'black']);
     }
 }
@@ -2009,17 +2099,17 @@ if ($cliHelper->getConfig('r', false)) {
     $cliHelper->printMessage($cliHelper->headerMessage('Recommendations ...'), ['fg_color' => 'cyan', 'bg_color' => 'black']);
 
     $recommendations = (new Recommendations())->getRecommendations($MYSQL_CONFIG);
-    if (function_exists('get_loaded_extensions')){
-        $cliHelper->printMessage('Loaded extensions : ',['fg_color' => 'yellow', 'bg_color' => 'black'],false);
+    if (function_exists('get_loaded_extensions')) {
+        $cliHelper->printMessage('Loaded extensions : ', ['fg_color' => 'yellow', 'bg_color' => 'black'], false);
         $cliHelper->emptyLine();
-        foreach (get_loaded_extensions() as $val){
-            $cliHelper->printMessage('  '.$val.'  ',['fg_color' => 'green', 'bg_color' => 'black'],false);
+        foreach (get_loaded_extensions() as $val) {
+            $cliHelper->printMessage('  ' . $val . '  ', ['fg_color' => 'green', 'bg_color' => 'black'], false);
         }
         $cliHelper->emptyLine();
     }
 
     if (isset($recommendations)) {
-        $cliHelper->printMessage('PHP Configuration Recommendations :',['fg_color' => 'yellow', 'bg_color' => 'black'],true);
+        $cliHelper->printMessage('PHP Configuration Recommendations :', ['fg_color' => 'yellow', 'bg_color' => 'black'], true);
         $cliHelper->emptyLine();
         foreach ($recommendations as $key => $value) {
             $cliHelper->printMessage($cliHelper->getBoxLine('empty-left') . '[ ' . $value['title'] . ' ]', ['fg_color' => 'light_blue', 'bg_color' => 'black']);
@@ -2063,5 +2153,5 @@ if ($cliHelper->getConfigWithArgv($argv, '-wh', false, null)) {
 
         $cliHelper->printArrayMessage($webserver_responses['cors']);
     }
-    unset($webserver_responses,$webserver_headers);
+    unset($webserver_responses, $webserver_headers);
 }
