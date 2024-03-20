@@ -1282,7 +1282,7 @@ class Recommendations
         if (file_exists($configPath)) {
             $configDate = date_diff(date_create(date('Y-m-d H:i:s', time())), date_create(date('Y-m-d H:i:s', filectime($configPath))));
 
-            if ($configDate->d > 0) {
+            if ($configDate->d > 0 || filesize($configPath) === 0) {
                 @unlink($configPath);
                 usleep(200);
             }
