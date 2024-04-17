@@ -9,5 +9,8 @@
             "email": "saeed.es91@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "php": "^7.4",
+    },
+    "minimum-stability": "dev"
 }
