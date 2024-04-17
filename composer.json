@@ -1,0 +1,13 @@
+{
+    "name": "saeedvir/pal-server-info",
+    "description": "PHP And Laravel (PaL) Server Info And Laravel Requirements Checker + PHP And Mysql Benchmark + Scan PHP Configuration in single file !!",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "saeed Abdollahian",
+            "email": "saeed.es91@gmail.com"
+        }
+    ],
+    "require": {}
+}
