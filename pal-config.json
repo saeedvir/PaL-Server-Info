@@ -537,13 +537,14 @@
     },
     "softawres": {
         "webservers": {
-            "Apache": "2.4.58",
-            "Nginx": "1.24.0",
-            "Lighttpd": "1.4.74"
+            "Apache": "2.4.65",
+            "Nginx": "1.29.1",
+            "Lighttpd": "1.4.81"
         },
-        "php": "8.2",
+        "php": "8.3",
         "mysql": "8.0",
-        "composer": "2.7.1",
-        "node": "20.11.1"
+        "composer": "2.8.11",
+        "node": "24.7.0"
     }
 }
+
