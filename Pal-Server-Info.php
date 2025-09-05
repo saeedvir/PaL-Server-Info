@@ -48,7 +48,7 @@ if (isset($_GET['Download_Update'])) {
     }
 }
 
-$laravel_version_select = (!empty($_GET['laravel_version'])) ? $_GET['laravel_version'] : '11.x';
+$laravel_version_select = (!empty($_GET['laravel_version'])) ? $_GET['laravel_version'] : '12.x';
 
 $check_list = (new ServerRequirements)->LaravelRequirementsList($laravel_version_select);
 $check_list['Mysql Version'] = @(new ServerCheck($MYSQL_CONFIG))->GetMysqlVersion();
@@ -126,21 +126,21 @@ class ServerRequirements
 {
 
     private $laravel_version;
-    public function __construct($laravel_version = '11.x')
+    public function __construct($laravel_version = '12.x')
     {
 
         $this->laravel_version = $this->setLaravelVersion($laravel_version);
     }
 
-    public function setLaravelVersion($laravel_version = '11.x')
+    public function setLaravelVersion($laravel_version = '12.x')
     {
         $laravel_version = (string)$laravel_version;
 
-        $laravel_versions = ['11.x', '10.x', '9.x', '8.x', '7.x', '6.x', '5.8'];
+        $laravel_versions = ['12.x', '11.x', '10.x', '9.x', '8.x', '7.x', '6.x', '5.8'];
         if (in_array($laravel_version, $laravel_versions) !== false) {
             $this->laravel_version = $laravel_version;
         } else {
-            $this->laravel_version = '11.x';
+            $this->laravel_version = '12.x';
         }
 
         return $this->laravel_version;
@@ -221,7 +221,7 @@ class ServerRequirements
             // 'Memory Usage' => (new Helper)->formatBytes(memory_get_usage(false)) . ' / ' . (new Helper)->formatBytes(memory_get_peak_usage(true)),
         ];
     }
-    public function LaravelRequirementsList($laravel_version = '11.x')
+    public function LaravelRequirementsList($laravel_version = '12.x')
     {
         $laravel_requirements = [
             '12.x' => [
@@ -346,7 +346,7 @@ class ServerRequirements
         $laravel_version = $this->setLaravelVersion($laravel_version);
 
         if (!isset($laravel_requirements[$laravel_version])) {
-            $laravel_requirements['11.x'];
+            $laravel_requirements['12.x'];
         }
 
         $laravel_requirements[$laravel_version]['Mysqli or PDO'] = (class_exists('mysqli') === true || class_exists('PDO') === true) ? true : false;
@@ -2200,6 +2200,7 @@ class ErrorReporting
                                         Laravel <?php echo $laravel_version_select; ?> Requirements
                                     </button>
                                     <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="?laravel_version=12.x">12.x</a></li>
                                         <li><a class="dropdown-item" href="?laravel_version=11.x">11.x</a></li>
                                         <li><a class="dropdown-item" href="?laravel_version=10.x">10.x</a></li>
                                         <li><a class="dropdown-item" href="?laravel_version=9.x">9.x</a></li>
