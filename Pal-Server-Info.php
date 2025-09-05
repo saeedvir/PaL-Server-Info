@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Php And Laravel (PaL) Server Info
  * Test on PHP version >= 7.4.33
@@ -6,7 +7,7 @@
  * @package  Php,Laravel
  * @author   Saeed Agha Abdollahian <https://github.com/saeedvir>
  * @link     https://github.com/saeedvir/PaL-Server-Info
- * @version  1.7 (Last Update : 2024-03-09)
+ * @version  1.8 (Last Update : 2025-09-05)
  * @since    2024-02-26
  * @license  MIT License https://opensource.org/licenses/MIT
  * @see      https://github.com/saeedvir/PaL-Server-Info
@@ -22,7 +23,7 @@ if ((new ServerCheck())->getWebServerEnvironment() === 'CLI') {
     exit(1);
 }
 //Initialise Variables
-$_VERSION = 'v 1.7'; //Current Version , Don't change this !!!
+$_VERSION = 'v 1.8'; //Current Version , Don't change this !!!
 //Global Variables For Mysql Config
 $MYSQL_CONFIG = (new Helper)->getSessions('mysql_config', [
     'host' => 'localhost',
@@ -223,6 +224,22 @@ class ServerRequirements
     public function LaravelRequirementsList($laravel_version = '11.x')
     {
         $laravel_requirements = [
+            '12.x' => [
+                'php version >= 8.2' => (version_compare(phpversion(), '8.2', '>=')),
+                'Ctype PHP Extension' => extension_loaded('ctype'),
+                'cURL PHP Extension' => extension_loaded('curl'),
+                'dom PHP Extension' => extension_loaded('dom'),
+                'Fileinfo PHP Extension' => extension_loaded('fileinfo'),
+                'Filter PHP Extension' => extension_loaded('filter'),
+                'Hash PHP Extension' => extension_loaded('hash'),
+                'Mbstring PHP Extension' => extension_loaded('mbstring'),
+                'OpenSSL PHP Extension' => extension_loaded('openssl'),
+                'PCRE PHP Extension' => extension_loaded('pcre'),
+                'PDO PHP Extension' => extension_loaded('pdo'),
+                'Session PHP Extension' => extension_loaded('session'),
+                'Tokenizer PHP Extension' => extension_loaded('tokenizer'),
+                'XML PHP Extension' => extension_loaded('xml'),
+            ],
             '11.x' => [
                 'php version >= 8.2' => (version_compare(phpversion(), '8.2', '>=')),
                 'Ctype PHP Extension' => extension_loaded('ctype'),
@@ -909,17 +926,17 @@ class Benchmark
     public function PhpBenchmark()
     {
         $benchmark_functions = [
-            'math' => fn ($multiplier = 1, $count = 200000) => $this->mathBenchmark($multiplier, $count),
-            'loops' => fn ($multiplier = 1, $count = 20000000) => $this->loopBenchmark($multiplier, $count),
-            'array' => fn ($multiplier = 1, $count = 50000) => $this->arrayBenchmark($multiplier, $count),
-            'hash' => fn ($multiplier = 1, $count = 10000) => $this->hashBenchmark($multiplier, $count),
-            'json' => fn ($multiplier = 1, $count = 100000) => $this->jsonBenchmark($multiplier, $count),
-            'mt_rand' => fn ($multiplier = 1, $count = 1000000) => $this->mtRandBenchmark($multiplier, $count),
-            'openssl_random_pseudo_bytes' => fn ($multiplier = 1, $count = 1000000) => $this->opensslRandomPseudoBytesBenchmark($multiplier, $count),
-            'file_read' => fn ($multiplier = 1, $count = 1000) => $this->fileReadBenchmark($multiplier, $count),
-            'file_write' => fn ($multiplier = 1, $count = 1000) => $this->fileWriteBenchmark($multiplier, $count),
-            'file_zip' => fn ($multiplier = 1, $count = 1000) => $this->fileZipBenchmark($multiplier, $count),
-            'file_unzip' => fn ($multiplier = 1, $count = 1000) => $this->fileUnzipBenchmark($multiplier, $count),
+            'math' => fn($multiplier = 1, $count = 200000) => $this->mathBenchmark($multiplier, $count),
+            'loops' => fn($multiplier = 1, $count = 20000000) => $this->loopBenchmark($multiplier, $count),
+            'array' => fn($multiplier = 1, $count = 50000) => $this->arrayBenchmark($multiplier, $count),
+            'hash' => fn($multiplier = 1, $count = 10000) => $this->hashBenchmark($multiplier, $count),
+            'json' => fn($multiplier = 1, $count = 100000) => $this->jsonBenchmark($multiplier, $count),
+            'mt_rand' => fn($multiplier = 1, $count = 1000000) => $this->mtRandBenchmark($multiplier, $count),
+            'openssl_random_pseudo_bytes' => fn($multiplier = 1, $count = 1000000) => $this->opensslRandomPseudoBytesBenchmark($multiplier, $count),
+            'file_read' => fn($multiplier = 1, $count = 1000) => $this->fileReadBenchmark($multiplier, $count),
+            'file_write' => fn($multiplier = 1, $count = 1000) => $this->fileWriteBenchmark($multiplier, $count),
+            'file_zip' => fn($multiplier = 1, $count = 1000) => $this->fileZipBenchmark($multiplier, $count),
+            'file_unzip' => fn($multiplier = 1, $count = 1000) => $this->fileUnzipBenchmark($multiplier, $count),
         ];
 
         $benchmark_results = [
@@ -1013,10 +1030,8 @@ class Benchmark
             array_keys($a);
             array_values($a);
             array_flip($a);
-            array_map(function ($e) {
-            }, $a);
-            array_walk($a, function ($e, $i) {
-            });
+            array_map(function ($e) {}, $a);
+            array_walk($a, function ($e, $i) {});
             array_reverse($a);
             array_sum($a);
             array_merge($a, [101, 102, 103]);
@@ -1269,9 +1284,7 @@ class Benchmark
 class Recommendations
 {
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function getCheckList($config_key = null)
     {
